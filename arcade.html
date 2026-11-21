@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Arcade - Ashley Kim</title>
+    <meta name="description" content="Playable demos of Ashley Kim's projects.">
+    <link rel="icon" type="image/png" href="avatar.png">
+    <script>
+        // Pick day/night before first paint: saved choice, else the system setting
+        (function () {
+            let t = null;
+            try { t = localStorage.getItem("theme"); } catch (e) {}
+            if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            document.documentElement.dataset.theme = t;
+        })();
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <nav>
+        <div class="wrap">
+            <a class="logo" href="index.html">ashley kim</a>
+            <div class="nav-links">
+                <a href="index.html#experience">Experience</a>
+                <a href="index.html#projects">Projects</a>
+                <a href="arcade.html" aria-current="page">Arcade</a>
+            </div>
+            <button class="icon-btn" id="theme"></button>
+        </div>
+    </nav>
+
+    <header class="hero small">
+        <div class="stars" aria-hidden="true"></div>
+        <div class="orb" aria-hidden="true"></div>
+        <div class="cloud c1" aria-hidden="true"></div>
+        <div class="cloud c2" aria-hidden="true"></div>
+        <div class="wrap hero-inner">
+            <div class="sign-col">
+                <div class="sign">
+                    <h1>Arcade</h1>
+                    <p>Playable demos of my projects. Pick one and try it right here!</p>
+                </div>
+                <div class="posts" aria-hidden="true"></div>
+            </div>
+        </div>
+        <div class="ground" aria-hidden="true"></div>
+    </header>
+
+    <section class="page-end">
+        <div class="wrap">
+            <div class="widgets" id="widgets">
+                <div class="panel loading">Loading the arcade...</div>
+            </div>
+        </div>
+    </section>
+
+    <script src="arcade.js"></script>
+    <script src="common.js"></script>
+    <script>
+        let DEMOS = [];
+        const youtubeId = u => (String(u).match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/) || [])[1];
+
+        // What kind of widget a demo gets: set "type" in arcade.js, or it's worked out from the link
+        function kindOf(d) {
+            if (["embed", "youtube", "video", "image", "link"].includes(d.type)) return d.type;
+            const u = String(d.url);
+            if (youtubeId(u)) return "youtube";
+            if (/\.(mp4|webm|ogv)([?#]|$)/i.test(u)) return "video";
+            if (/\.(gif|png|jpe?g|webp)([?#]|$)/i.test(u)) return "image";
+            return "embed";
+        }
+
+        const ASPECT_OK = /^\d+(\.\d+)?\s*\/\s*\d+(\.\d+)?$/;
+
+        function stage(d, kind) {
+            const url = safeUrl(String(d.url));
+            const name = esc(d.title || d.repo);
+            switch (kind) {
+                case "image":
+                    return `<img src="${esc(url)}" alt="${name} demo" loading="lazy">`;
+                case "video":
+                    return `<video src="${esc(url)}" controls playsinline preload="metadata"
+                        ${d.image ? `poster="${esc(safeUrl(String(d.image)))}"` : ""}></video>`;
+                case "link": {
+                    const poster = d.image ? `style="background-image:url('${esc(encodeURI(safeUrl(String(d.image))))}')"` : "";
+                    return `<a class="start" href="${esc(url)}" target="_blank" rel="noopener" ${poster}>
+                        ${d.image ? "" : ICONS.bigPlay}<span class="press">Open demo</span></a>`;
+                }
+                case "youtube":
+                    return `<iframe src="https://www.youtube-nocookie.com/embed/${youtubeId(d.url)}" title="${name} demo" loading="lazy"
+                        allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+                default: // a web page or game
+                    return `<iframe src="${esc(url)}" title="${name} demo" loading="lazy"
+                        allow="autoplay; fullscreen; gamepad; clipboard-write" allowfullscreen></iframe>`;
+            }
+        }
+
+        function widget(d, i) {
+            const kind = kindOf(d);
+            const url = safeUrl(String(d.url));
+            const aspect = ASPECT_OK.test(String(d.aspect || "")) ? `style="aspect-ratio:${d.aspect}"` : "";
+            const canFullscreen = kind === "embed" || kind === "youtube" || kind === "video";
+            return `
+                <article class="panel widget ${d.wide ? "wide" : ""}" id="${esc(d.id)}" style="--i:${i}">
+                    <header class="widget-bar">
+                        <h2 class="widget-title">${esc(d.title || d.repo)}</h2>
+                        ${canFullscreen ? `<button class="tool" data-fullscreen title="Full screen" aria-label="Full screen">${ICONS.fullscreen}</button>` : ""}
+                        <a class="tool" href="${esc(url)}" target="_blank" rel="noopener" title="Open in a new tab" aria-label="Open in a new tab">${ICONS.arrow}</a>
+                    </header>
+                    <div class="stage ${d.aspect ? "" : "auto-fit"}" ${aspect}>${stage(d, kind)}</div>
+                    <div class="widget-body">
+                        ${d.description ? `<p>${esc(d.description)}</p>` : ""}
+                        ${d.repo ? `<div class="demo-actions">
+                            <a class="btn" href="https://github.com/${GH_USER}/${encodeURIComponent(d.repo)}" target="_blank" rel="noopener">View code</a>
+                        </div>` : ""}
+                    </div>
+                </article>`;
+        }
+
+        // Games hosted on this site report their height, so the widget fits the game.
+        // Demos hosted elsewhere keep the default shape.
+        function fitToContent(frame) {
+            frame.addEventListener("load", () => {
+                try {
+                    const body = frame.contentDocument.body;
+                    const st = frame.parentElement;
+                    const fit = () => {
+                        const cs = frame.contentWindow.getComputedStyle(body);
+                        st.classList.add("fit");
+                        frame.style.height = Math.ceil(body.getBoundingClientRect().height
+                            + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom)) + "px";
+                    };
+                    new ResizeObserver(fit).observe(body);
+                    fit();
+                } catch (e) { /* hosted elsewhere: can't measure it */ }
+            });
+        }
+
+        function render(note) {
+            const list = $("widgets");
+            if (!DEMOS.length) {
+                list.innerHTML = `<div class="panel demos-empty">${ICONS.sprout}<div><h3>${note ? "Couldn't load the arcade" : "Demos coming soon!"}</h3>
+                    <p>${note || "Playable versions of my projects are growing here."}</p></div></div>`;
+                return;
+            }
+            list.innerHTML = DEMOS.map(widget).join("");
+            list.querySelectorAll(".stage.auto-fit > iframe").forEach(fitToContent);
+            // Coming from a "Play demo" button: scroll to that demo now that it exists
+            if (location.hash) {
+                const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+                if (target) target.scrollIntoView();
+            }
+        }
+
+        $("widgets").addEventListener("click", e => {
+            const btn = e.target.closest("[data-fullscreen]");
+            if (!btn) return;
+            const st = btn.closest(".widget").querySelector(".stage");
+            if (st.requestFullscreen) st.requestFullscreen().catch(() => {});
+        });
+
+        loadGitHub()
+            .then(({ repos, pinned }) => { DEMOS = buildDemos(repos, pinned); render(); })
+            .catch(() => {
+                // GitHub didn't answer: still show the demos listed in arcade.js
+                DEMOS = buildDemos();
+                render(DEMOS.length ? "" : "GitHub didn't respond. Try refreshing in a minute.");
+            });
+    </script>
+</body>
+</html>
