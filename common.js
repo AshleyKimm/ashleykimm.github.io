@@ -211,7 +211,8 @@ function jumpToPending() {
     const flock = document.createElement("div");
     flock.className = "birds";
     flock.setAttribute("aria-hidden", "true");
-    (hero.querySelector(".stars") || hero.firstChild).after(flock);  // behind the sign
+    // In front of the sun/moon, behind the clouds and the sign
+    (hero.querySelector(".orb") || hero.querySelector(".stars") || hero.firstChild).after(flock);
 
     function birds() {
         // Only during the day, and not while the tab is in the background
