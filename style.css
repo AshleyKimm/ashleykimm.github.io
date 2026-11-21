@@ -181,7 +181,9 @@ section h2 {
 /* Experience journal */
 .journal { padding: 20px 24px; }
 .journal ul { list-style: none; margin: 0; padding: 0; }
-.journal li { display: flex; gap: 16px; align-items: flex-start; padding: 12px 0; }
+.journal li { display: flex; gap: 20px; align-items: center; padding: 12px 0; }
+/* Company logos: 24x24 pixel art shown at 2x, in the site's notched pixel frame */
+.logo-tile { width: 48px; height: 48px; flex: none; margin: 4px; image-rendering: pixelated; box-shadow: var(--notch); }
 .journal li + li { border-top: 4px dotted var(--paper-shade); }
 .journal h3 { font-size: 30px; }
 .journal p { margin: 0; color: var(--muted); }
