@@ -138,11 +138,14 @@ nav .wrap { display: flex; align-items: center; gap: 16px; height: 56px; }
 @media (max-width: 520px) { .sign h1 { font-size: 40px; } }
 .scene { position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: center; gap: 16px; width: 100%; }
 .sign-col { display: flex; flex-direction: column; align-items: center; width: min(100%, 640px); }
-.hero-avatar {
-    display: block; width: 250px; height: 250px; flex: none; margin-bottom: -16px;
-    image-rendering: pixelated; cursor: pointer;
+/* The box stays put and catches the hover; only the picture inside hops,
+   so the mouse doesn't slip off mid-jump and make it stutter. Not clickable. */
+.hero-avatar { display: block; width: 250px; height: 250px; flex: none; margin-bottom: -16px; cursor: default; }
+.hero-avatar img {
+    display: block; width: 100%; height: 100%;
+    image-rendering: pixelated; user-select: none; -webkit-user-drag: none;
 }
-.hero-avatar:hover { animation: hop .4s steps(4); }
+.hero-avatar:hover img { animation: hop .5s steps(4) infinite; } /* keeps hopping while hovered */
 @keyframes hop { 50% { transform: translateY(-16px); } }
 .posts { position: relative; width: 100%; height: 48px; }
 @media (max-width: 860px) {
