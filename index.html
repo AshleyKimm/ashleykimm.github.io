@@ -246,17 +246,16 @@
         .repo-name::after { content: ""; position: absolute; inset: 0; }
         .repo .play { position: relative; z-index: 1; align-self: flex-start; margin: 0 4px 12px; padding: 4px 12px 8px; }
 
-        /* Play-a-demo dialog */
-        .demo {
-            width: min(860px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0;
-            border: 4px solid var(--wood-light); background: var(--paper); color: var(--ink);
-            box-shadow: inset 0 -4px 0 var(--paper-shade), var(--notch);
-        }
-        .demo::backdrop { background: rgba(20, 12, 4, .6); }
-        .demo-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; }
-        .demo-bar h3 { font-size: 30px; margin-right: auto; color: var(--accent); }
-        .demo-bar .btn { font-size: 20px; padding: 4px 12px 8px; }
-        .demo iframe { display: block; width: 100%; height: min(760px, calc(100vh - 120px)); border: 0; background: #10111a; }
+        /* Arcade: playable demos embedded on the page */
+        section, .cabinet { scroll-margin-top: 64px; }
+        .arcade { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; }
+        .cabinet { display: flex; flex-direction: column; padding: 12px 16px 16px; }
+        .cabinet-top { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+        .cabinet-top h3 { font-size: 30px; color: var(--accent); margin-right: auto; word-break: break-word; }
+        .cabinet-top .btn { font-size: 20px; padding: 4px 12px 8px; }
+        .cabinet .desc { flex: none; }
+        .screen { padding: 4px; background: var(--outline); box-shadow: var(--notch); margin: 4px; }
+        .screen iframe { display: block; width: 100%; height: 480px; border: 0; background: #10111a; }
         .repo-top .px { color: var(--muted); transition: transform .12s steps(2); }
         .repo:hover .repo-top .px { transform: translate(3px, -3px); color: var(--accent); }
         .desc { color: var(--ink); margin: 8px 0 12px; flex: 1; }
@@ -285,6 +284,7 @@
             <a class="logo" href="#top">ashley kim</a>
             <div class="nav-links">
                 <a href="#experience">Experience</a>
+                <a href="#arcade" id="arcade-link" hidden>Arcade</a>
                 <a href="#projects">Projects</a>
             </div>
             <button class="icon-btn" id="theme"></button>
@@ -330,6 +330,13 @@
         </div>
     </section>
 
+    <section id="arcade" hidden>
+        <div class="wrap">
+            <h2>Arcade</h2>
+            <div class="arcade" id="arcade-grid"></div>
+        </div>
+    </section>
+
     <section id="projects">
         <div class="wrap">
             <h2>Projects</h2>
@@ -350,16 +357,6 @@
             <button class="btn more" id="more" hidden>Show more</button>
         </div>
     </section>
-
-    <dialog class="demo" id="demo" aria-labelledby="demo-title">
-        <div class="demo-bar">
-            <h3 id="demo-title"></h3>
-            <a class="btn" id="demo-full" target="_blank" rel="noopener">Full screen</a>
-            <a class="btn" id="demo-src" target="_blank" rel="noopener">Source</a>
-            <button class="btn primary" id="demo-close" type="button">Close</button>
-        </div>
-        <iframe id="demo-frame" title="Project demo"></iframe>
-    </dialog>
 
     <script>
         const GH_USER = "AshleyKimm";
@@ -506,7 +503,7 @@
                     ${pinned ? `<span class="pin-badge">${ICONS.pin}Pinned</span>` : ""}
                     <div class="repo-top"><a class="repo-name" href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.name)}</a>${ICONS.arrow}</div>
                     <p class="desc ${r.description ? "" : "none"}">${r.description ? esc(r.description) : "No description yet."}</p>
-                    ${demo ? `<button class="btn primary play" type="button" data-demo="${esc(demo)}" data-name="${esc(r.name)}" data-src="${esc(r.html_url)}">${ICONS.play}Play demo</button>` : ""}
+                    ${demo ? `<a class="btn primary play" href="#demo-${esc(r.name)}">${ICONS.play}Play demo</a>` : ""}
                     ${topics.length ? `<div class="topics">${topics.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
                     <div class="meta">
                         ${r.language ? `<span><i class="swatch" style="--c:${color(r.language)}"></i>${esc(r.language)}</span>` : ""}
@@ -554,19 +551,40 @@
         $("sort").addEventListener("change", e => { state.sort = e.target.value; renderRepos(); });
         $("more").addEventListener("click", () => { state.shown += PAGE; renderRepos(); });
 
-        /* ---------- Demo dialog ---------- */
-        $("repos").addEventListener("click", e => {
-            const b = e.target.closest("[data-demo]");
-            if (!b) return;
-            $("demo-title").textContent = b.dataset.name;
-            $("demo-full").href = b.dataset.demo;
-            $("demo-src").href = b.dataset.src;
-            $("demo-frame").src = b.dataset.demo;
-            $("demo").showModal();
-        });
-        $("demo-close").addEventListener("click", () => $("demo").close());
-        $("demo").addEventListener("click", e => { if (e.target === $("demo")) $("demo").close(); }); // backdrop click
-        $("demo").addEventListener("close", () => { $("demo-frame").src = "about:blank"; }); // stop the game
+        /* ---------- Arcade ---------- */
+        // Demos hosted on this site (same origin) report their height, so each widget fits its game.
+        // Demos hosted elsewhere keep the default height.
+        function fitToContent(frame) {
+            frame.addEventListener("load", () => {
+                try {
+                    const body = frame.contentDocument.body;
+                    const fit = () => {
+                        const cs = frame.contentWindow.getComputedStyle(body);
+                        frame.style.height = Math.ceil(body.getBoundingClientRect().height
+                            + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom)) + "px";
+                    };
+                    new ResizeObserver(fit).observe(body);
+                    fit();
+                } catch (e) {}
+            });
+        }
+
+        function renderArcade() {
+            const demos = state.repos.filter(demoUrl).sort((a, b) =>
+                pinRank(a) - pinRank(b) || new Date(b.pushed_at) - new Date(a.pushed_at));
+            $("arcade").hidden = $("arcade-link").hidden = !demos.length;
+            $("arcade-grid").innerHTML = demos.map(r => `
+                <article class="panel cabinet" id="demo-${esc(r.name)}">
+                    <div class="cabinet-top">
+                        <h3>${esc(r.name)}</h3>
+                        <a class="btn" href="${esc(demoUrl(r))}" target="_blank" rel="noopener">Full screen</a>
+                        <a class="btn" href="${esc(r.html_url)}" target="_blank" rel="noopener">Source</a>
+                    </div>
+                    ${r.description ? `<p class="desc">${esc(r.description)}</p>` : ""}
+                    <div class="screen"><iframe src="${esc(demoUrl(r))}" title="${esc(r.name)} demo" loading="lazy"></iframe></div>
+                </article>`).join("");
+            $("arcade-grid").querySelectorAll("iframe").forEach(fitToContent);
+        }
 
         /* ---------- Load ---------- */
         Promise.all([
@@ -577,6 +595,7 @@
             state.pinned = Array.isArray(pinned) ? pinned.map(n => String(n).toLowerCase()) : [];
             state.repos = repos.filter(r => !r.fork && !r.archived && !HIDDEN.has(r.name.toLowerCase()));
             renderProfile(user, state.repos);
+            renderArcade();
             render();
         }).catch(() => {
             $("repos").innerHTML = `<div class="panel error">Couldn't reach GitHub right now. See my projects on
