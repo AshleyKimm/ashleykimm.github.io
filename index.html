@@ -230,7 +230,7 @@
         /* Project cards */
         .repos { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
         .repo {
-            display: flex; flex-direction: column; padding: 14px 16px; text-decoration: none;
+            position: relative; display: flex; flex-direction: column; padding: 14px 16px;
             transition: transform .12s steps(2), background-color .12s steps(2);
             animation: pop .3s steps(3) both; animation-delay: calc(var(--i) * 60ms);
         }
@@ -241,7 +241,22 @@
             margin: -4px 0 8px; color: var(--accent);
         }
         .repo-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
-        .repo-name { font-size: 30px; line-height: 1; color: var(--accent); word-break: break-word; }
+        .repo-name { font-size: 30px; line-height: 1; color: var(--accent); word-break: break-word; text-decoration: none; }
+        /* The name link stretches over the whole card, so the card stays clickable. */
+        .repo-name::after { content: ""; position: absolute; inset: 0; }
+        .repo .play { position: relative; z-index: 1; align-self: flex-start; margin: 0 4px 12px; padding: 4px 12px 8px; }
+
+        /* Play-a-demo dialog */
+        .demo {
+            width: min(860px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0;
+            border: 4px solid var(--wood-light); background: var(--paper); color: var(--ink);
+            box-shadow: inset 0 -4px 0 var(--paper-shade), var(--notch);
+        }
+        .demo::backdrop { background: rgba(20, 12, 4, .6); }
+        .demo-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; }
+        .demo-bar h3 { font-size: 30px; margin-right: auto; color: var(--accent); }
+        .demo-bar .btn { font-size: 20px; padding: 4px 12px 8px; }
+        .demo iframe { display: block; width: 100%; height: min(760px, calc(100vh - 120px)); border: 0; background: #10111a; }
         .repo-top .px { color: var(--muted); transition: transform .12s steps(2); }
         .repo:hover .repo-top .px { transform: translate(3px, -3px); color: var(--accent); }
         .desc { color: var(--ink); margin: 8px 0 12px; flex: 1; }
@@ -336,6 +351,16 @@
         </div>
     </section>
 
+    <dialog class="demo" id="demo" aria-labelledby="demo-title">
+        <div class="demo-bar">
+            <h3 id="demo-title"></h3>
+            <a class="btn" id="demo-full" target="_blank" rel="noopener">Full screen</a>
+            <a class="btn" id="demo-src" target="_blank" rel="noopener">Source</a>
+            <button class="btn primary" id="demo-close" type="button">Close</button>
+        </div>
+        <iframe id="demo-frame" title="Project demo"></iframe>
+    </dialog>
+
     <script>
         const GH_USER = "AshleyKimm";
         const HIDDEN = new Set([`${GH_USER}.github.io`, GH_USER].map(n => n.toLowerCase()));
@@ -378,6 +403,7 @@
             pin: px([".rrr.", "rwrrr", "rrrrr", ".rrr.", "..g..", "..g..", "..g.."],
                 { r: "#e5484d", w: "#ffb3b3", g: "#6b6b6b" }, 3),
             arrow: px(["..cccc", "....cc", "...c.c", "..c..c", ".c....", "c....."], { c: "currentColor" }, 3),
+            play: px(["c....", "cc...", "ccc..", "cccc.", "ccc..", "cc...", "c...."], { c: "currentColor" }, 3),
             sun: px(["....y....", ".y.....y.", "...yyy...", "..yyyyy..", "y.yyyyy.y", "..yyyyy..", "...yyy...", ".y.....y.", "....y...."],
                 { y: "#ffd23f" }, 3),
             moon: px(["...mmmm..", "..mmm....", ".mmm.....", ".mmm.....", ".mmm.....", ".mmmm....", "..mmmmmm.", "...mmmm.."],
@@ -464,21 +490,30 @@
                     </button>`).join("");
         }
 
+        // A project is playable if its repo publishes a GitHub Pages site.
+        function demoUrl(r) {
+            if (!r.has_pages) return null;
+            if (r.homepage && /^https:\/\//.test(r.homepage)) return r.homepage;
+            return `https://${GH_USER.toLowerCase()}.github.io/${r.name}/`;
+        }
+
         function card(r, i) {
             const topics = (r.topics || []).slice(0, 3);
             const pinned = pinRank(r) !== Infinity;
+            const demo = demoUrl(r);
             return `
-                <a class="panel repo ${pinned ? "pinned" : ""}" href="${esc(r.html_url)}" target="_blank" rel="noopener" style="--i:${i}">
+                <div class="panel repo ${pinned ? "pinned" : ""}" style="--i:${i}">
                     ${pinned ? `<span class="pin-badge">${ICONS.pin}Pinned</span>` : ""}
-                    <div class="repo-top"><span class="repo-name">${esc(r.name)}</span>${ICONS.arrow}</div>
+                    <div class="repo-top"><a class="repo-name" href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.name)}</a>${ICONS.arrow}</div>
                     <p class="desc ${r.description ? "" : "none"}">${r.description ? esc(r.description) : "No description yet."}</p>
+                    ${demo ? `<button class="btn primary play" type="button" data-demo="${esc(demo)}" data-name="${esc(r.name)}" data-src="${esc(r.html_url)}">${ICONS.play}Play demo</button>` : ""}
                     ${topics.length ? `<div class="topics">${topics.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
                     <div class="meta">
                         ${r.language ? `<span><i class="swatch" style="--c:${color(r.language)}"></i>${esc(r.language)}</span>` : ""}
                         <span>${ICONS.star}${r.stargazers_count}</span>
                         <span>Updated ${ago(r.pushed_at)}</span>
                     </div>
-                </a>`;
+                </div>`;
         }
 
         function renderRepos() {
@@ -518,6 +553,20 @@
         $("search").addEventListener("input", e => { state.q = e.target.value; state.shown = PAGE; renderRepos(); });
         $("sort").addEventListener("change", e => { state.sort = e.target.value; renderRepos(); });
         $("more").addEventListener("click", () => { state.shown += PAGE; renderRepos(); });
+
+        /* ---------- Demo dialog ---------- */
+        $("repos").addEventListener("click", e => {
+            const b = e.target.closest("[data-demo]");
+            if (!b) return;
+            $("demo-title").textContent = b.dataset.name;
+            $("demo-full").href = b.dataset.demo;
+            $("demo-src").href = b.dataset.src;
+            $("demo-frame").src = b.dataset.demo;
+            $("demo").showModal();
+        });
+        $("demo-close").addEventListener("click", () => $("demo").close());
+        $("demo").addEventListener("click", e => { if (e.target === $("demo")) $("demo").close(); }); // backdrop click
+        $("demo").addEventListener("close", () => { $("demo-frame").src = "about:blank"; }); // stop the game
 
         /* ---------- Load ---------- */
         Promise.all([
