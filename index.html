@@ -21,11 +21,11 @@
 <body>
     <nav>
         <div class="wrap">
-            <a class="logo" href="#top">ashley kim</a>
+            <a class="logo" href="./" data-page="home" data-target="top">ashley kim</a>
             <div class="nav-links">
-                <a href="#experience">Experience</a>
-                <a href="#projects">Projects</a>
-                <a href="arcade.html">Arcade</a>
+                <a href="./" data-page="home" data-target="experience">Experience</a>
+                <a href="./" data-page="home" data-target="projects">Projects</a>
+                <a href="arcade" data-page="arcade">Arcade</a>
             </div>
             <button class="icon-btn" id="theme"></button>
         </div>
@@ -44,7 +44,7 @@
                         <div class="eyebrow">Computer Engineering @ University of Waterloo</div>
                         <h1>Hi, I'm Ashley!</h1>
                         <div class="btns">
-                            <a class="btn primary" href="#projects">See my projects</a>
+                            <a class="btn primary" href="./" data-page="home" data-target="projects">See my projects</a>
                             <a class="btn" href="https://github.com/AshleyKimm" target="_blank" rel="noopener">GitHub</a>
                             <a class="btn" href="https://linkedin.com/in/ashkimm" target="_blank" rel="noopener">LinkedIn</a>
                         </div>
@@ -165,7 +165,7 @@
                     ${pinned ? `<span class="pin-badge">${ICONS.pin}Pinned</span>` : ""}
                     <div class="repo-top"><a class="repo-name" href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.name)}</a>${ICONS.arrow}</div>
                     <p class="desc ${r.description ? "" : "none"}">${r.description ? esc(r.description) : "No description yet."}</p>
-                    ${demo ? `<a class="btn primary play" href="arcade.html#${esc(demo.id)}">${ICONS.play}Play demo</a>` : ""}
+                    ${demo ? `<a class="btn primary play" href="${PAGES.arcade}" data-target="${esc(demo.id)}">${ICONS.play}Play demo</a>` : ""}
                     ${topics.length ? `<div class="topics">${topics.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
                     <div class="meta">
                         ${r.language ? `<span><i class="swatch" style="--c:${color(r.language)}"></i>${esc(r.language)}</span>` : ""}
@@ -220,7 +220,9 @@
             state.demos = buildDemos(repos, pinned);
             renderProfile(user, state.repos);
             render();
+            jumpToPending(); // e.g. "Projects" clicked on the Arcade page
         }).catch(() => {
+            jumpToPending();
             $("repos").innerHTML = `<div class="panel error">Couldn't reach GitHub right now. See my projects on
                 <a href="https://github.com/${GH_USER}" target="_blank" rel="noopener">GitHub</a>.</div>`;
         });

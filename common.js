@@ -126,7 +126,7 @@ function buildDemos(repos = [], pinned = []) {
         (rankIn(pinned, a.repo || "") - rankIn(pinned, b.repo || "") || 0) ||   // pinned projects first
         (a.order - b.order || 0) ||                                             // then arcade.js order
         pushed(b) - pushed(a));                                                 // then recently updated
-    // Unique ids for links like arcade.html#demo-minesweeper-qt
+    // Unique ids (demo-minesweeper-qt, ...) used by "Play demo" to scroll to the right game
     const seen = {};
     demos.forEach(d => {
         const base = "demo-" + (String(d.repo || d.title || "demo").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "demo");
@@ -136,3 +136,36 @@ function buildDemos(repos = [], pinned = []) {
     return demos;
 }
 const demoForRepo = (demos, name) => demos.find(d => String(d.repo || "").toLowerCase() === name.toLowerCase());
+
+/* ---------- Clean URLs: ashleykimm.github.io/arcade, no "#" ---------- */
+// GitHub Pages serves arcade.html at /arcade. Files opened straight from disk need the .html names.
+const LOCAL = location.protocol === "file:";
+const PAGES = { home: LOCAL ? "index.html" : "./", arcade: LOCAL ? "arcade.html" : "arcade" };
+document.querySelectorAll("a[data-page]").forEach(a => { a.href = PAGES[a.dataset.page]; });
+
+// Links with data-target scroll to that part of the page without adding "#..." to the address.
+// If the target is on another page, remember it and scroll there once that page loads.
+document.addEventListener("click", e => {
+    const a = e.target.closest("a[data-target]");
+    if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+    const el = document.getElementById(a.dataset.target);
+    if (el) {
+        e.preventDefault();
+        el.scrollIntoView();
+    } else {
+        try { sessionStorage.setItem("jump", a.dataset.target); } catch (err) {}
+    }
+});
+
+// Call after the page's content exists. Also handles old links that still have "#..." in them.
+function jumpToPending() {
+    let id = null;
+    try { id = sessionStorage.getItem("jump"); } catch (e) {}
+    if (!id && location.hash) id = decodeURIComponent(location.hash.slice(1));
+    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    try { sessionStorage.removeItem("jump"); } catch (e) {}
+    el.scrollIntoView();
+}
