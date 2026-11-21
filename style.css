@@ -183,13 +183,21 @@ section h2 {
 
 /* Experience journal */
 .journal { padding: 20px 24px; }
-.journal ul { list-style: none; margin: 0; padding: 0; }
-.journal li { display: flex; gap: 20px; align-items: center; padding: 12px 0; }
+.journal > ul { list-style: none; margin: 0; padding: 0; }
+.journal > ul > li { display: flex; gap: 20px; align-items: flex-start; padding: 16px 0; }
 /* Company logos: 24x24 pixel art shown at 3x, in the site's notched pixel frame */
 .logo-tile { width: 72px; height: 72px; flex: none; margin: 4px; image-rendering: pixelated; box-shadow: var(--notch); }
-.journal li + li { border-top: 4px dotted var(--paper-shade); }
+.journal > ul > li + li { border-top: 4px dotted var(--paper-shade); }
 .journal h3 { font-size: 30px; }
 .journal p { margin: 0; color: var(--muted); }
+.job { flex: 1; min-width: 0; }
+.role { margin-top: 6px; }
+.role + .role { margin-top: 14px; }
+.role-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 16px; }
+.journal .role-title { color: var(--ink); }
+.dates { color: var(--muted); }
+.tools { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0 4px; padding: 0; }
+.tools li { padding: 0 8px 2px; color: var(--paper-light); background: var(--green-dark); box-shadow: var(--notch); }
 
 /* GitHub player card */
 .gh-profile { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; padding: 16px 20px; margin-bottom: 20px; }
@@ -353,3 +361,12 @@ section h2 {
 @keyframes fly-left { from { transform: translateX(calc(100vw + 60px)); } to { transform: translateX(-60px); } }
 @keyframes flap { to { background-position: -72px 0; } }
 @keyframes bob { 50% { transform: translateY(-6px); } }
+
+/* Phones: smaller logos and tighter spacing so the tool tags have room */
+@media (max-width: 520px) {
+    .journal { padding: 12px 14px; }
+    .journal > ul > li { gap: 12px; }
+    .logo-tile { width: 48px; height: 48px; }
+    .tools { gap: 6px; }
+    .tools li { padding: 0 6px 2px; }
+}
