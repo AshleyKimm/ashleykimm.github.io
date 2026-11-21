@@ -240,14 +240,15 @@ section h2 {
     transition: transform .12s steps(2), background-color .12s steps(2);
     animation: pop .3s steps(3) both; animation-delay: calc(var(--i) * 60ms);
 }
-.repo:hover { transform: translateY(-4px); background-color: var(--paper-light); }
+/* The card reacts to hover, except while the mouse is on its "Play demo" button */
+.repo:hover:not(:has(.play:hover)) { transform: translateY(-4px); background-color: var(--paper-light); }
 .pin-badge { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin: -4px 0 8px; color: var(--accent); }
 .repo-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
 .repo-name { font-size: 30px; line-height: 1; color: var(--accent); word-break: break-word; text-decoration: none; }
 .repo-name::after { content: ""; position: absolute; inset: 0; } /* whole card opens the repo */
 .repo .play { position: relative; z-index: 1; align-self: flex-start; margin: 0 4px 12px; padding: 4px 12px 8px; }
 
-.repo:hover .repo-top .px { transform: translate(3px, -3px); color: var(--accent); }
+.repo:hover:not(:has(.play:hover)) .repo-top .px { transform: translate(3px, -3px); color: var(--accent); }
 .desc { color: var(--ink); margin: 8px 0 12px; flex: 1; }
 .desc.none { color: var(--muted); }
 .topics { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px 4px; }
