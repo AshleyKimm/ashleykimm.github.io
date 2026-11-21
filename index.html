@@ -6,6 +6,17 @@
     <title>Ashley Kim</title>
     <meta name="description" content="Ashley Kim - Computer Engineering at the University of Waterloo.">
     <link rel="icon" type="image/png" href="avatar.png">
+    <!-- Link preview card (LinkedIn, Discord, iMessage, ...) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ashley Kim">
+    <meta property="og:title" content="Ashley Kim">
+    <meta property="og:description" content="Computer Engineering at the University of Waterloo. Experience, projects and playable demos.">
+    <meta property="og:url" content="https://ashleykimm.github.io/">
+    <meta property="og:image" content="https://ashleykimm.github.io/images/og-card.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Pixel-art Ashley next to a wooden sign reading Ashley Kim">
+    <meta name="twitter:card" content="summary_large_image">
     <script>
         // Pick day/night before first paint: saved choice, else the system setting
         (function () {
@@ -22,11 +33,12 @@
     <nav>
         <div class="wrap">
             <a class="logo" href="./" data-page="home" data-target="top">ashley kim</a>
-            <div class="nav-links">
+            <div class="nav-links" id="nav-links">
                 <a href="./" data-page="home" data-target="experience">Experience</a>
                 <a href="./" data-page="home" data-target="projects">Projects</a>
                 <a href="arcade" data-page="arcade">Arcade</a>
             </div>
+            <button class="icon-btn menu-btn" id="menu" aria-label="Menu" aria-expanded="false" aria-controls="nav-links"></button>
             <button class="icon-btn" id="theme"></button>
         </div>
     </nav>
@@ -47,6 +59,7 @@
                             <a class="btn primary" href="./" data-page="home" data-target="projects">See my projects</a>
                             <a class="btn" href="https://github.com/AshleyKimm" target="_blank" rel="noopener">GitHub</a>
                             <a class="btn" href="https://linkedin.com/in/ashkimm" target="_blank" rel="noopener">LinkedIn</a>
+                            <a class="btn" href="mailto:a238kim@uwaterloo.ca">Email</a>
                         </div>
                     </div>
                     <div class="posts" aria-hidden="true"></div>
@@ -72,7 +85,7 @@
                         </div></li>
                     <li><img class="logo-tile" src="images/logos/d2l.png" alt="D2L logo" width="24" height="24"><div class="job"><h3>D2L</h3>
                             <div class="role"><div class="role-head"><p class="role-title">Software Developer</p><span class="dates">May 2024 - Aug 2024</span></div>
-                                <ul class="tools" aria-label="Tools used"><li>C#</li><li>NUnit</li><li>Moq</li><li>Playwright</li><li>TypeScript</li><li>PostgreSQL</li></ul></div>
+                                <ul class="tools" aria-label="Tools used"><li>C#</li><li>NUnit</li><li>Moq</li><li>Playwright</li><li>JavaScript</li><li>TypeScript</li><li>PostgreSQL</li></ul></div>
                             <div class="role"><div class="role-head"><p class="role-title">Software Test Developer</p><span class="dates">Sep 2023 - Dec 2023</span></div>
                                 <ul class="tools" aria-label="Tools used"><li>Puppeteer</li><li>AWS CloudWatch</li></ul></div>
                         </div></li>
@@ -85,27 +98,16 @@
         <div class="wrap">
             <h2>Projects</h2>
             <div class="panel gh-profile" id="gh-profile" hidden></div>
-            <div class="lang-bar" id="lang-bar"></div>
-            <div class="controls">
-                <div class="chips" id="chips" role="group" aria-label="Filter by language"></div>
-                <input class="search" id="search" type="search" placeholder="Search projects..." aria-label="Search projects">
-                <select class="sort" id="sort" aria-label="Sort projects">
-                    <option value="updated">Recently updated</option>
-                    <option value="stars">Most stars</option>
-                    <option value="name">Name (A-Z)</option>
-                </select>
-            </div>
             <div class="repos" id="repos">
                 <div class="panel loading">Loading projects...</div>
             </div>
-            <button class="btn more" id="more" hidden>Show more</button>
+            <a class="btn more" href="https://github.com/AshleyKimm?tab=repositories" target="_blank" rel="noopener">See all projects on GitHub</a>
         </div>
     </section>
 
     <script src="arcade.js"></script>
     <script src="common.js"></script>
     <script>
-        const PAGE = 6;
         const LANG_COLORS = {
             "Python": "#3572A5", "C++": "#f34b7d", "C": "#555555", "C#": "#178600", "Java": "#b07219",
             "JavaScript": "#f1e05a", "TypeScript": "#3178c6", "HTML": "#e34c26", "CSS": "#663399",
@@ -113,20 +115,10 @@
             "Shell": "#89e051", "Kotlin": "#A97BFF", "Swift": "#F05138", "CMake": "#DA3434"
         };
         const color = lang => LANG_COLORS[lang] || "#8b8b8b";
-        const state = { repos: [], pinned: [], demos: [], lang: "All", q: "", sort: "updated", shown: PAGE };
-        const pinRank = r => rankIn(state.pinned, r.name);
+        const FALLBACK_COUNT = 6; // shown if nothing is pinned
+        const state = { repos: [], pinned: [], demos: [] };
 
-        const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-        function ago(date) {
-            const s = (new Date(date) - Date.now()) / 1000;
-            for (const [unit, n] of [["year", 31536000], ["month", 2592000], ["week", 604800], ["day", 86400], ["hour", 3600], ["minute", 60]])
-                if (Math.abs(s) >= n) return rtf.format(Math.round(s / n), unit);
-            return "just now";
-        }
-
-        /* ---------- Rendering ---------- */
         function renderProfile(u, repos) {
-            const stars = repos.reduce((n, r) => n + r.stargazers_count, 0);
             const avatar = new URL(u.avatar_url);
             avatar.searchParams.set("s", "40"); // tiny image, scaled up = pixel portrait
             const el = $("gh-profile");
@@ -136,101 +128,38 @@
                     <a href="${esc(u.html_url)}" target="_blank" rel="noopener">@${esc(u.login)}</a>
                     <p>${u.bio ? esc(u.bio) : `Exploring GitHub since ${new Date(u.created_at).getFullYear()}`}</p>
                 </div>
-                <div class="stats">
-                    <div class="stat">${ICONS.chest}<div><strong>${repos.length}</strong><span>projects</span></div></div>
-                    <div class="stat">${ICONS.bigStar}<div><strong>${stars}</strong><span>stars</span></div></div>
-                    <div class="stat">${ICONS.heart}<div><strong>${u.followers}</strong><span>followers</span></div></div>
-                </div>`;
+                <div class="stat">${ICONS.chest}<span>${repos.length} projects</span></div>`;
             el.hidden = false;
-        }
-
-        function languages() {
-            const counts = {};
-            state.repos.forEach(r => { if (r.language) counts[r.language] = (counts[r.language] || 0) + 1; });
-            return Object.entries(counts).sort((a, b) => b[1] - a[1]);
-        }
-
-        function renderFilters() {
-            const langs = languages();
-            const total = langs.reduce((n, [, c]) => n + c, 0);
-            const bar = $("lang-bar");
-            bar.classList.toggle("filtering", state.lang !== "All");
-            bar.innerHTML = langs.map(([l, c]) => `
-                <button style="--c:${color(l)};flex:${c}" data-lang="${esc(l)}" class="${state.lang === l ? "on" : ""}"
-                    title="${esc(l)}: ${c} project${c > 1 ? "s" : ""} (${Math.round(c / total * 100)}%)"
-                    aria-label="Show ${esc(l)} projects"></button>`).join("");
-            $("chips").innerHTML =
-                `<button class="btn chip" data-lang="All" aria-pressed="${state.lang === "All"}">All <small>${state.repos.length}</small></button>` +
-                langs.map(([l, c]) => `
-                    <button class="btn chip" data-lang="${esc(l)}" aria-pressed="${state.lang === l}">
-                        <i class="swatch" style="--c:${color(l)}"></i>${esc(l)} <small>${c}</small>
-                    </button>`).join("");
         }
 
         function card(r, i) {
             const topics = (r.topics || []).slice(0, 3);
-            const pinned = pinRank(r) !== Infinity;
             const demo = demoForRepo(state.demos, r.name);
             return `
-                <div class="panel repo ${pinned ? "pinned" : ""}" style="--i:${i}">
-                    ${pinned ? `<span class="pin-badge">${ICONS.pin}Pinned</span>` : ""}
+                <div class="panel repo" style="--i:${i}">
                     <div class="repo-top"><a class="repo-name" href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.name)}</a>${ICONS.arrow}</div>
                     <p class="desc ${r.description ? "" : "none"}">${r.description ? esc(r.description) : "No description yet."}</p>
                     ${demo ? `<a class="btn primary play" href="${PAGES.arcade}" data-target="${esc(demo.id)}">${ICONS.play}Play demo</a>` : ""}
                     ${topics.length ? `<div class="topics">${topics.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
-                    <div class="meta">
-                        ${r.language ? `<span><i class="swatch" style="--c:${color(r.language)}"></i>${esc(r.language)}</span>` : ""}
-                        <span>${ICONS.star}${r.stargazers_count}</span>
-                        <span>Updated ${ago(r.pushed_at)}</span>
-                    </div>
+                    ${r.language ? `<div class="meta"><span><i class="swatch" style="--c:${color(r.language)}"></i>${esc(r.language)}</span></div>` : ""}
                 </div>`;
         }
 
-        function renderRepos() {
-            const q = state.q.trim().toLowerCase();
-            const list = state.repos
-                .filter(r => state.lang === "All" || r.language === state.lang)
-                .filter(r => !q || r.name.toLowerCase().includes(q) || (r.description || "").toLowerCase().includes(q)
-                    || (r.topics || []).some(t => t.includes(q)))
-                .sort((a, b) => {
-                    // Pinned repos always come first, in the order they're pinned on GitHub
-                    const pa = pinRank(a), pb = pinRank(b);
-                    if (pa !== pb) return pa === Infinity ? 1 : pb === Infinity ? -1 : pa - pb;
-                    return {
-                        updated: () => new Date(b.pushed_at) - new Date(a.pushed_at),
-                        stars: () => b.stargazers_count - a.stargazers_count || new Date(b.pushed_at) - new Date(a.pushed_at),
-                        name: () => a.name.localeCompare(b.name)
-                    }[state.sort]();
-                });
-            const visible = list.slice(0, state.shown);
-            $("repos").innerHTML = visible.length ? visible.map(card).join("") : `<div class="panel empty">No projects match that.</div>`;
-            const left = list.length - visible.length;
-            $("more").hidden = left <= 0;
-            $("more").textContent = `Show ${Math.min(PAGE, left)} more`;
+        // Hand-picked: the repos pinned on GitHub, in pin order. Nothing pinned? The most recently updated ones.
+        function featured() {
+            const pinned = state.repos.filter(r => rankIn(state.pinned, r.name) !== Infinity)
+                .sort((a, b) => rankIn(state.pinned, a.name) - rankIn(state.pinned, b.name));
+            if (pinned.length) return pinned;
+            return [...state.repos].sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at)).slice(0, FALLBACK_COUNT);
         }
 
-        function render() { renderFilters(); renderRepos(); }
-
-        /* ---------- Interactions ---------- */
-        function setLang(lang) {
-            // Clicking the active language again clears the filter
-            state.lang = state.lang === lang && lang !== "All" ? "All" : lang;
-            state.shown = PAGE;
-            render();
-        }
-        $("chips").addEventListener("click", e => { const b = e.target.closest("[data-lang]"); if (b) setLang(b.dataset.lang); });
-        $("lang-bar").addEventListener("click", e => { const b = e.target.closest("[data-lang]"); if (b) setLang(b.dataset.lang); });
-        $("search").addEventListener("input", e => { state.q = e.target.value; state.shown = PAGE; renderRepos(); });
-        $("sort").addEventListener("change", e => { state.sort = e.target.value; renderRepos(); });
-        $("more").addEventListener("click", () => { state.shown += PAGE; renderRepos(); });
-
-        /* ---------- Load ---------- */
         loadGitHub().then(({ user, repos, pinned }) => {
             state.pinned = pinned;
             state.repos = repos;
             state.demos = buildDemos(repos, pinned);
-            renderProfile(user, state.repos);
-            render();
+            renderProfile(user, repos);
+            const list = featured();
+            $("repos").innerHTML = list.length ? list.map(card).join("") : `<div class="panel empty">Projects coming soon!</div>`;
             jumpToPending(); // e.g. "Projects" clicked on the Arcade page
         }).catch(() => {
             jumpToPending();

@@ -6,6 +6,17 @@
     <title>Arcade - Ashley Kim</title>
     <meta name="description" content="Playable demos of Ashley Kim's projects.">
     <link rel="icon" type="image/png" href="avatar.png">
+    <!-- Link preview card (LinkedIn, Discord, iMessage, ...) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ashley Kim">
+    <meta property="og:title" content="Arcade - Ashley Kim">
+    <meta property="og:description" content="Playable demos of Ashley Kim's projects, right in the browser.">
+    <meta property="og:url" content="https://ashleykimm.github.io/arcade">
+    <meta property="og:image" content="https://ashleykimm.github.io/images/og-card.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Pixel-art Ashley next to a wooden sign reading Ashley Kim">
+    <meta name="twitter:card" content="summary_large_image">
     <script>
         // Pick day/night before first paint: saved choice, else the system setting
         (function () {
@@ -22,11 +33,12 @@
     <nav>
         <div class="wrap">
             <a class="logo" href="./" data-page="home">ashley kim</a>
-            <div class="nav-links">
+            <div class="nav-links" id="nav-links">
                 <a href="./" data-page="home" data-target="experience">Experience</a>
                 <a href="./" data-page="home" data-target="projects">Projects</a>
                 <a href="arcade" data-page="arcade" aria-current="page">Arcade</a>
             </div>
+            <button class="icon-btn menu-btn" id="menu" aria-label="Menu" aria-expanded="false" aria-controls="nav-links"></button>
             <button class="icon-btn" id="theme"></button>
         </div>
     </nav>

@@ -1,6 +1,8 @@
-# Saves the repos pinned on your GitHub profile to pinned.json,
-# which the website reads to show pinned projects first.
-name: Sync pinned repos
+# Once a day, saves GitHub data the website reads, so visitors don't call GitHub's API themselves
+# (it allows only 60 requests an hour per network):
+#   pinned.json       - the repos pinned on your profile, in order (shown in Projects)
+#   data/github.json  - your profile and project list
+name: Sync GitHub data
 
 on:
   schedule:
@@ -33,14 +35,30 @@ jobs:
           rm response.json
           cat pinned.json
 
+      - name: Fetch profile and project list
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          mkdir -p data
+          gh api "users/$OWNER" > user.json
+          gh api "users/$OWNER/repos?per_page=100&sort=pushed" > repos.json
+          # Keep only the fields the website uses
+          jq -c --slurpfile u user.json '{
+              user: ($u[0] | {login, html_url, avatar_url, bio, created_at}),
+              repos: [.[] | {name, description, language, html_url, homepage, has_pages, fork, archived, pushed_at, topics}]
+            }' repos.json > data/github.json
+          rm user.json repos.json
+          jq '.repos | length' data/github.json
+
       - name: Commit if changed
         run: |
-          if git diff --quiet -- pinned.json; then
-            echo "Pinned repos unchanged."
+          git add pinned.json data/github.json
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pinned.json
-          git commit -m "Update pinned repos"
+          git commit -m "Update GitHub data"
           git push

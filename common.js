@@ -34,6 +34,8 @@ const ICONS = {
     fullscreen: px(["ccc.ccc", "c.....c", "c.....c", ".......", "c.....c", "c.....c", "ccc.ccc"], { c: "currentColor" }, 3),
     sun: px(["....y....", ".y.....y.", "...yyy...", "..yyyyy..", "y.yyyyy.y", "..yyyyy..", "...yyy...", ".y.....y.", "....y...."],
         { y: "#ffd23f" }, 3),
+    menu: px(["ccccccc", ".......", ".......", "ccccccc", ".......", ".......", "ccccccc"], { c: "currentColor" }, 3),
+    close: px(["c.....c", ".c...c.", "..c.c..", "...c...", "..c.c..", ".c...c.", "c.....c"], { c: "currentColor" }, 3),
     moon: px(["...mmmm..", "..mmm....", ".mmm.....", ".mmm.....", ".mmm.....", ".mmmm....", "..mmmmmm.", "...mmmm.."],
         { m: "#f4ecc2" }, 3)
 };
@@ -52,6 +54,24 @@ $("theme").addEventListener("click", () => {
     paintThemeBtn();
 });
 paintThemeBtn();
+
+/* ---------- Phone menu (the nav links are hidden on narrow screens) ---------- */
+(() => {
+    const btn = $("menu"), nav = btn && btn.closest("nav");
+    if (!btn) return;
+    const set = open => {
+        nav.classList.toggle("open", open);
+        btn.setAttribute("aria-expanded", String(open));
+        btn.setAttribute("aria-label", open ? "Close menu" : "Menu");
+        btn.innerHTML = open ? ICONS.close : ICONS.menu;
+    };
+    set(false);
+    btn.addEventListener("click", () => set(!nav.classList.contains("open")));
+    $("nav-links").addEventListener("click", e => { if (e.target.closest("a")) set(false); });
+    // Tap outside the bar closes it. composedPath() is used because set() swaps out the tapped icon.
+    document.addEventListener("click", e => { if (!e.composedPath().includes(nav)) set(false); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") set(false); });
+})();
 
 /* ---------- GitHub data (cached for 10 min to stay under GitHub's rate limit) ---------- */
 const HIDDEN = new Set([`${GH_USER}.github.io`, GH_USER].map(n => n.toLowerCase()));
@@ -72,12 +92,24 @@ async function getJSON(url) {
     return d;
 }
 
+// data/github.json is a daily snapshot of the profile and project list, saved by the same workflow.
+// Loading it avoids GitHub's limit of 60 API requests an hour per network (e.g. shared Wi-Fi).
+const DATA_URL = `https://raw.githubusercontent.com/${GH_USER}/${GH_USER.toLowerCase()}.github.io/main/data/github.json`;
+
 async function loadGitHub() {
-    const [user, repos, pinned] = await Promise.all([
-        getJSON(`https://api.github.com/users/${GH_USER}`),
-        getJSON(`https://api.github.com/users/${GH_USER}/repos?per_page=100&sort=pushed`),
+    const [saved, pinned] = await Promise.all([
+        getJSON(DATA_URL).catch(() => null),
         getJSON(PINNED_URL).catch(() => []) // no pins is fine; just skip them
     ]);
+    let user, repos;
+    if (saved && saved.user && Array.isArray(saved.repos)) {
+        ({ user, repos } = saved);
+    } else { // no snapshot yet: ask GitHub's API directly
+        [user, repos] = await Promise.all([
+            getJSON(`https://api.github.com/users/${GH_USER}`),
+            getJSON(`https://api.github.com/users/${GH_USER}/repos?per_page=100&sort=pushed`)
+        ]);
+    }
     return {
         user,
         repos: repos.filter(r => !r.fork && !r.archived && !HIDDEN.has(r.name.toLowerCase())),
