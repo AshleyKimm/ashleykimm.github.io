@@ -257,7 +257,7 @@ section h2 {
 .hero.small .posts { height: 40px; }
 
 /* ---------- Arcade widgets ---------- */
-.widgets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 20px; }
+.widgets { display: grid; grid-template-columns: 1fr; gap: 24px; } /* one demo per row */
 .widget {
     display: flex; flex-direction: column; padding: 0; scroll-margin-top: 88px;
     animation: pop .3s steps(3) both; animation-delay: calc(var(--i) * 60ms);
