@@ -1,34 +1,538 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ashley Kim</title>
+    <meta name="description" content="Ashley Kim - Computer Engineering at the University of Waterloo.">
+    <link rel="icon" type="image/png" href="avatar.png">
+    <script>
+        // Pick day/night before first paint: saved choice, else the system setting
+        (function () {
+            let t = null;
+            try { t = localStorage.getItem("theme"); } catch (e) {}
+            if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            document.documentElement.dataset.theme = t;
+        })();
+    </script>
+    <style>
+        @font-face {
+            font-family: "Munro";
+            src: url("munro.ttf") format("truetype");
+            font-display: swap;
+        }
+
+        /* ---------- Palette (day) ---------- */
+        :root {
+            --sky1: #6ec6f0; --sky2: #84d0f3; --sky3: #9bdaf6; --sky4: #b5e5f9;
+            --paper: #fbe8bb; --paper-light: #fff5d6; --paper-shade: #e6c587;
+            --ink: #4a2a12; --muted: #8a5a2e; --outline: #4a2a12;
+            --wood-light: #d08a3c; --green: #5aa83a; --green-dark: #3f7f25; --accent: #c8453f;
+            --tint: transparent; --cloud-opacity: 1; --stars: none;
+            --orb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'%3E%3Cg fill='%23ffd23f'%3E%3Crect x='4' width='4' height='1'/%3E%3Crect x='2' y='1' width='8' height='1'/%3E%3Crect x='1' y='2' width='10' height='2'/%3E%3Crect y='4' width='12' height='4'/%3E%3Crect x='1' y='8' width='10' height='2'/%3E%3Crect x='2' y='10' width='8' height='1'/%3E%3Crect x='4' y='11' width='4' height='1'/%3E%3C/g%3E%3Crect x='3' y='2' width='2' height='2' fill='%23fff1a8'/%3E%3C/svg%3E");
+            --notch: 0 -4px 0 0 var(--outline), 0 4px 0 0 var(--outline), -4px 0 0 0 var(--outline), 4px 0 0 0 var(--outline);
+        }
+        /* ---------- Palette (night) ---------- */
+        :root[data-theme="dark"] {
+            --sky1: #141a3f; --sky2: #1b2352; --sky3: #232d66; --sky4: #2d3a7c;
+            --paper: #ead3a0; --paper-light: #f3e2b8; --paper-shade: #cfae6e;
+            --tint: rgba(16, 18, 52, .5); --cloud-opacity: .3; --stars: block;
+            --orb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' shape-rendering='crispEdges'%3E%3Cg fill='%23f4ecc2'%3E%3Crect x='4' width='4' height='1'/%3E%3Crect x='2' y='1' width='8' height='1'/%3E%3Crect x='1' y='2' width='10' height='2'/%3E%3Crect y='4' width='12' height='4'/%3E%3Crect x='1' y='8' width='10' height='2'/%3E%3Crect x='2' y='10' width='8' height='1'/%3E%3Crect x='4' y='11' width='4' height='1'/%3E%3C/g%3E%3Cg fill='%23d6cb98'%3E%3Crect x='6' y='3' width='2' height='2'/%3E%3Crect x='3' y='7' width='2' height='1'/%3E%3Crect x='8' y='8' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0; color: var(--ink);
+            font: 20px/1.35 Munro, monospace;
+            -webkit-font-smoothing: none; font-smooth: never;
+            background-color: #a0622d;
+            background-image:
+                linear-gradient(var(--tint), var(--tint)),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='16' shape-rendering='crispEdges'%3E%3Crect width='32' height='16' fill='%23a0622d'/%3E%3Cg fill='%23704217'%3E%3Crect y='7' width='32' height='1'/%3E%3Crect y='15' width='32' height='1'/%3E%3Crect x='12' width='1' height='7'/%3E%3Crect x='26' y='8' width='1' height='7'/%3E%3C/g%3E%3Cg fill='%23b47438'%3E%3Crect x='3' y='2' width='5' height='1'/%3E%3Crect x='18' y='10' width='4' height='1'/%3E%3C/g%3E%3Cg fill='%238f5626'%3E%3Crect x='17' y='4' width='6' height='1'/%3E%3Crect x='5' y='11' width='7' height='1'/%3E%3C/g%3E%3C/svg%3E");
+            background-size: auto, 128px 64px;
+            image-rendering: pixelated;
+        }
+        a { color: inherit; }
+        ::selection { background: var(--green); color: var(--paper-light); }
+        :focus-visible { outline: 4px solid #ffd23f; outline-offset: 4px; }
+        .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+        h1, h2, h3 { font-weight: normal; margin: 0; line-height: 1.1; }
+        .px { display: inline-block; vertical-align: middle; flex: none; }
+
+        /* ---------- Shared pixel pieces ---------- */
+        .panel {
+            background: var(--paper); border: 4px solid var(--wood-light); margin: 4px;
+            box-shadow: inset 0 -4px 0 var(--paper-shade), var(--notch);
+        }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px 10px; margin: 4px;
+            font: 20px Munro, monospace; color: var(--paper-light); text-decoration: none; cursor: pointer;
+            background: var(--wood-light); border: 0; text-shadow: 2px 2px 0 var(--outline);
+            box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .25), var(--notch);
+            transition: transform .1s steps(2);
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:active { transform: translateY(2px); box-shadow: var(--notch); }
+        .btn.primary { background: var(--green); }
+
+        /* ---------- Nav ---------- */
+        nav {
+            position: sticky; top: 0; z-index: 10; color: var(--paper-light);
+            background: #7d4620; box-shadow: 0 4px 0 var(--outline);
+        }
+        nav .wrap { display: flex; align-items: center; gap: 16px; height: 56px; }
+        .logo { text-decoration: none; margin-right: auto; font-size: 30px; text-shadow: 2px 2px 0 var(--outline); }
+        .nav-links a { text-decoration: none; margin-left: 20px; text-shadow: 2px 2px 0 var(--outline); }
+        .nav-links a:hover { color: #ffd23f; }
+        .icon-btn {
+            width: 40px; height: 40px; display: grid; place-items: center; cursor: pointer; padding: 0;
+            background: var(--wood-light); border: 0; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .25), var(--notch);
+        }
+        .icon-btn:active { transform: translateY(2px); }
+        @media (max-width: 520px) { .nav-links { display: none; } }
+
+        /* ---------- Hero scene ---------- */
+        .hero {
+            position: relative; overflow: hidden;
+            background: linear-gradient(var(--sky1) 0 25%, var(--sky2) 25% 50%, var(--sky3) 50% 75%, var(--sky4) 75%);
+        }
+        .stars {
+            display: var(--stars); position: absolute; inset: 0;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='60' shape-rendering='crispEdges'%3E%3Cg fill='%23fff6c4'%3E%3Crect x='10' y='8' width='1' height='1'/%3E%3Crect x='37' y='22' width='1' height='1'/%3E%3Crect x='62' y='5' width='1' height='1'/%3E%3Crect x='85' y='30' width='1' height='1'/%3E%3Crect x='20' y='45' width='1' height='1'/%3E%3Crect x='55' y='40' width='1' height='1'/%3E%3Crect x='78' y='12' width='1' height='1'/%3E%3Crect x='5' y='30' width='1' height='1'/%3E%3Crect x='45' y='33' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 300px 180px;
+            animation: twinkle 2.4s steps(1) infinite;
+        }
+        @keyframes twinkle { 50% { opacity: .55; } }
+        .orb {
+            position: absolute; top: 40px; right: 10%; width: 72px; height: 72px;
+            background: var(--orb) center / contain no-repeat;
+        }
+        .cloud {
+            position: absolute; left: 0; width: 96px; height: 40px; opacity: var(--cloud-opacity);
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='10' shape-rendering='crispEdges'%3E%3Cg fill='white'%3E%3Crect x='8' width='6' height='1'/%3E%3Crect x='6' y='1' width='10' height='2'/%3E%3Crect x='15' y='2' width='5' height='2'/%3E%3Crect x='2' y='3' width='20' height='3'/%3E%3Crect y='5' width='24' height='2'/%3E%3C/g%3E%3Cg fill='%23cfe6f3'%3E%3Crect y='7' width='24' height='1'/%3E%3Crect x='2' y='8' width='20' height='1'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+            animation: drift linear infinite;
+        }
+        .cloud.c1 { top: 36px; animation-duration: 70s; animation-delay: -20s; }
+        .cloud.c2 { top: 120px; width: 144px; height: 60px; animation-duration: 95s; animation-delay: -60s; }
+        .cloud.c3 { top: 200px; width: 72px; height: 30px; animation-duration: 80s; animation-delay: -45s; }
+        @keyframes drift { from { transform: translateX(-160px); } to { transform: translateX(100vw); } }
+
+        .hero-inner { position: relative; padding-top: 72px; display: flex; flex-direction: column; align-items: center; }
+        .sign {
+            width: min(100%, 640px); padding: 24px; text-align: center; color: var(--paper-light);
+            background-color: #c98a4b;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='16' shape-rendering='crispEdges'%3E%3Crect width='32' height='16' fill='%23c98a4b'/%3E%3Cg fill='%238a5424'%3E%3Crect y='7' width='32' height='1'/%3E%3Crect y='15' width='32' height='1'/%3E%3Crect x='12' width='1' height='7'/%3E%3Crect x='26' y='8' width='1' height='7'/%3E%3C/g%3E%3Cg fill='%23d99c5c'%3E%3Crect x='3' y='2' width='5' height='1'/%3E%3Crect x='18' y='10' width='4' height='1'/%3E%3C/g%3E%3Cg fill='%23b57a3e'%3E%3Crect x='17' y='4' width='6' height='1'/%3E%3Crect x='5' y='11' width='7' height='1'/%3E%3C/g%3E%3C/svg%3E");
+            background-size: 128px 64px;
+            box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .2), var(--notch);
+            text-shadow: 2px 2px 0 var(--outline);
+        }
+        .sign .eyebrow { color: #ffe9a8; }
+        .sign h1 { font-size: 60px; margin: 8px 0 20px; text-shadow: 4px 4px 0 var(--outline); }
+        .sign .btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; text-shadow: none; }
+        @media (max-width: 520px) { .sign h1 { font-size: 40px; } }
+        .scene { position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: center; gap: 16px; width: 100%; }
+        .sign-col { display: flex; flex-direction: column; align-items: center; width: min(100%, 640px); }
+        .hero-avatar {
+            display: block; width: 250px; height: 250px; flex: none; margin-bottom: -16px;
+            image-rendering: pixelated; cursor: pointer;
+        }
+        .hero-avatar:hover { animation: hop .4s steps(4); }
+        @keyframes hop { 50% { transform: translateY(-16px); } }
+        .posts { position: relative; width: 100%; height: 48px; }
+        @media (max-width: 860px) {
+            .posts { height: 160px; }
+            .hero-avatar {
+                position: absolute; left: 50%; bottom: 0; width: 160px; height: 160px;
+                translate: -50% 0; margin-bottom: -12px;
+            }
+        }
+        .posts::before, .posts::after {
+            content: ""; position: absolute; top: 4px; bottom: 0; width: 16px;
+            background: #8a5424; box-shadow: inset -4px 0 0 #6b3f1a, var(--notch);
+        }
+        .posts::before { left: 20%; }
+        .posts::after { right: 20%; }
+        .ground {
+            position: relative; height: 48px;
+            background-color: #88552e;
+            background-image:
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='16' shape-rendering='crispEdges'%3E%3Crect x='11' y='3' width='1' height='3' fill='%233f7f25'/%3E%3Cg fill='%23ff7eb6'%3E%3Crect x='10' y='1' width='1' height='1'/%3E%3Crect x='12' y='1' width='1' height='1'/%3E%3Crect x='11' y='0' width='1' height='1'/%3E%3Crect x='11' y='2' width='1' height='1'/%3E%3C/g%3E%3Crect x='11' y='1' width='1' height='1' fill='%23ffd23f'/%3E%3Crect x='31' y='3' width='1' height='3' fill='%233f7f25'/%3E%3Cg fill='%23ffffff'%3E%3Crect x='30' y='1' width='1' height='1'/%3E%3Crect x='32' y='1' width='1' height='1'/%3E%3Crect x='31' y='0' width='1' height='1'/%3E%3Crect x='31' y='2' width='1' height='1'/%3E%3C/g%3E%3Crect x='31' y='1' width='1' height='1' fill='%23ffd23f'/%3E%3C/svg%3E"),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Crect y='6' width='16' height='10' fill='%2388552e'/%3E%3Cg fill='%234f9a33'%3E%3Crect y='4' width='16' height='4'/%3E%3Crect x='1' y='2' width='1' height='2'/%3E%3Crect x='5' y='1' width='1' height='3'/%3E%3Crect x='9' y='3' width='1' height='1'/%3E%3Crect x='13' y='2' width='1' height='2'/%3E%3C/g%3E%3Crect y='4' width='16' height='1' fill='%2376c043'/%3E%3Crect y='8' width='16' height='1' fill='%236b4423'/%3E%3Cg fill='%23a87445'%3E%3Crect x='3' y='11' width='2' height='1'/%3E%3Crect x='11' y='13' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+            background-size: 120px 48px, 48px 48px;
+            background-repeat: repeat-x;
+            box-shadow: 0 4px 0 var(--outline);
+        }
+
+        /* ---------- Sections ---------- */
+        section { padding: 48px 0 16px; }
+        #projects { padding-bottom: 96px; }
+        section h2 {
+            display: inline-block; font-size: 30px; padding: 4px 20px 8px; margin: 0 4px 20px;
+            color: var(--paper-light); background: var(--wood-light); text-shadow: 2px 2px 0 var(--outline);
+            box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .25), var(--notch);
+        }
+
+        /* Experience journal */
+        .journal { padding: 20px 24px; }
+        .journal ul { list-style: none; margin: 0; padding: 0; }
+        .journal li { display: flex; gap: 16px; align-items: flex-start; padding: 12px 0; }
+        .journal li + li { border-top: 4px dotted var(--paper-shade); }
+        .journal h3 { font-size: 30px; }
+        .journal p { margin: 0; color: var(--muted); }
+
+        /* GitHub player card */
+        .gh-profile { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; padding: 16px 20px; margin-bottom: 20px; }
+        .gh-profile[hidden] { display: none; }
+        .avatar {
+            width: 80px; height: 80px; image-rendering: pixelated; display: block;
+            border: 4px solid var(--paper-light); box-shadow: var(--notch);
+        }
+        .gh-who { flex: 1 1 200px; }
+        .gh-who a { font-size: 30px; text-decoration: none; }
+        .gh-who a:hover { color: var(--accent); }
+        .gh-who p { margin: 0; color: var(--muted); }
+        .stats { display: flex; flex-wrap: wrap; gap: 20px; }
+        .stat { display: flex; align-items: center; gap: 8px; }
+        .stat strong { font-weight: normal; font-size: 30px; display: block; line-height: 1; }
+        .stat span { color: var(--muted); }
+
+        /* Language energy bar */
+        .lang-bar {
+            display: flex; gap: 4px; height: 24px; padding: 4px; margin: 4px 4px 20px;
+            background: var(--outline); box-shadow: var(--notch);
+        }
+        .lang-bar button {
+            border: 0; padding: 0; cursor: pointer; min-width: 8px; background: var(--c);
+            box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .25), inset 0 4px 0 rgba(255, 255, 255, .25);
+        }
+        .lang-bar.filtering button:not(.on) { opacity: .3; }
+
+        /* Controls */
+        .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; }
+        .chips { display: flex; flex-wrap: wrap; gap: 8px; flex: 1 1 100%; }
+        .chip { font-size: 20px; padding: 4px 12px 8px; }
+        .chip[aria-pressed="true"] { background: var(--green); }
+        .chip small { font-size: 20px; color: #ffe9a8; }
+        .swatch { width: 12px; height: 12px; background: var(--c, #8b8b8b); box-shadow: 0 0 0 2px var(--outline); display: inline-block; }
+        .search, .sort {
+            height: 44px; margin: 4px; padding: 0 12px; border: 0; border-radius: 0;
+            font: 20px Munro, monospace; color: var(--ink); background-color: var(--paper-light);
+            box-shadow: inset 0 4px 0 var(--paper-shade), var(--notch);
+        }
+        .search { flex: 1 1 220px; min-width: 0; }
+        .search::placeholder { color: var(--muted); }
+        .sort {
+            appearance: none; -webkit-appearance: none; padding-right: 36px; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='5' height='3' shape-rendering='crispEdges'%3E%3Cg fill='%234a2a12'%3E%3Crect width='5' height='1'/%3E%3Crect x='1' y='1' width='3' height='1'/%3E%3Crect x='2' y='2' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center; background-size: 15px 9px;
+        }
+
+        /* Project cards */
+        .repos { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+        .repo {
+            display: flex; flex-direction: column; padding: 14px 16px; text-decoration: none;
+            transition: transform .12s steps(2), background-color .12s steps(2);
+            animation: pop .3s steps(3) both; animation-delay: calc(var(--i) * 60ms);
+        }
+        .repo:hover { transform: translateY(-4px); background-color: var(--paper-light); }
+        .repo.pinned { border-color: #e8b84a; }
+        .pin-badge {
+            align-self: flex-start; display: inline-flex; align-items: center; gap: 6px;
+            margin: -4px 0 8px; color: var(--accent);
+        }
+        .repo-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+        .repo-name { font-size: 30px; line-height: 1; color: var(--accent); word-break: break-word; }
+        .repo-top .px { color: var(--muted); transition: transform .12s steps(2); }
+        .repo:hover .repo-top .px { transform: translate(3px, -3px); color: var(--accent); }
+        .desc { color: var(--ink); margin: 8px 0 12px; flex: 1; }
+        .desc.none { color: var(--muted); }
+        .topics { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px 4px; }
+        .topics span { padding: 0 8px 2px; color: var(--paper-light); background: var(--green-dark); box-shadow: var(--notch); }
+        .meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); align-items: center; }
+        .meta span { display: inline-flex; align-items: center; gap: 8px; }
+        @keyframes pop { from { opacity: 0; transform: translateY(12px); } }
+
+        .more { display: flex; margin: 28px auto 0; }
+        .more[hidden] { display: none; }
+        .empty, .error { grid-column: 1 / -1; text-align: center; padding: 24px; }
+        .loading { grid-column: 1 / -1; text-align: center; padding: 24px; animation: blink 1s steps(1) infinite; }
+        @keyframes blink { 50% { opacity: .4; } }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+        }
+    </style>
 </head>
 
 <body>
+    <nav>
+        <div class="wrap">
+            <a class="logo" href="#top">ashley kim</a>
+            <div class="nav-links">
+                <a href="#experience">Experience</a>
+                <a href="#projects">Projects</a>
+            </div>
+            <button class="icon-btn" id="theme"></button>
+        </div>
+    </nav>
 
-    <h1>Ashley Kim</h1>
-    <p>Computer Engineering @ University of Waterloo</p>
+    <header class="hero" id="top">
+        <div class="stars" aria-hidden="true"></div>
+        <div class="orb" aria-hidden="true"></div>
+        <div class="cloud c1" aria-hidden="true"></div>
+        <div class="cloud c2" aria-hidden="true"></div>
+        <div class="cloud c3" aria-hidden="true"></div>
+        <div class="wrap hero-inner">
+            <div class="scene">
+            <div class="sign-col">
+            <div class="sign">
+                <div class="eyebrow">Computer Engineering @ University of Waterloo</div>
+                <h1>Hi, I'm Ashley!</h1>
+                <div class="btns">
+                    <a class="btn primary" href="#projects">See my projects</a>
+                    <a class="btn" href="https://github.com/AshleyKimm" target="_blank" rel="noopener">GitHub</a>
+                    <a class="btn" href="https://linkedin.com/in/ashkimm" target="_blank" rel="noopener">LinkedIn</a>
+                </div>
+            </div>
+            <div class="posts" aria-hidden="true"></div>
+            </div>
+            <img class="hero-avatar" src="avatar.png" alt="Pixel-art Ashley" width="250" height="250">
+            </div>
+        </div>
+        <div class="ground" aria-hidden="true"></div>
+    </header>
 
-    <h2>Experience</h2>
+    <section id="experience">
+        <div class="wrap">
+            <h2>Experience</h2>
+            <div class="panel journal">
+                <ul>
+                    <li><span data-icon="sprout"></span><div><h3>Nokia</h3><p>Cyber Security Dome Test Automation</p></div></li>
+                    <li><span data-icon="sprout"></span><div><h3>Dayforce</h3><p>Software Developer</p></div></li>
+                    <li><span data-icon="sprout"></span><div><h3>D2L</h3><p>Software Developer / Test Developer</p></div></li>
+                </ul>
+            </div>
+        </div>
+    </section>
 
-    <h3>Nokia</h3>
-    <p>Cyber Security Dome Test Automation</p>
+    <section id="projects">
+        <div class="wrap">
+            <h2>Projects</h2>
+            <div class="panel gh-profile" id="gh-profile" hidden></div>
+            <div class="lang-bar" id="lang-bar"></div>
+            <div class="controls">
+                <div class="chips" id="chips" role="group" aria-label="Filter by language"></div>
+                <input class="search" id="search" type="search" placeholder="Search projects..." aria-label="Search projects">
+                <select class="sort" id="sort" aria-label="Sort projects">
+                    <option value="updated">Recently updated</option>
+                    <option value="stars">Most stars</option>
+                    <option value="name">Name (A-Z)</option>
+                </select>
+            </div>
+            <div class="repos" id="repos">
+                <div class="panel loading">Loading projects...</div>
+            </div>
+            <button class="btn more" id="more" hidden>Show more</button>
+        </div>
+    </section>
 
-    <h3>Dayforce</h3>
-    <p>Software Developer</p>
+    <script>
+        const GH_USER = "AshleyKimm";
+        const HIDDEN = new Set([`${GH_USER}.github.io`, GH_USER].map(n => n.toLowerCase()));
+        const PAGE = 6;
+        const LANG_COLORS = {
+            "Python": "#3572A5", "C++": "#f34b7d", "C": "#555555", "C#": "#178600", "Java": "#b07219",
+            "JavaScript": "#f1e05a", "TypeScript": "#3178c6", "HTML": "#e34c26", "CSS": "#663399",
+            "QML": "#44a51c", "Jupyter Notebook": "#DA5B0B", "Go": "#00ADD8", "Rust": "#dea584",
+            "Shell": "#89e051", "Kotlin": "#A97BFF", "Swift": "#F05138", "CMake": "#DA3434"
+        };
+        const color = lang => LANG_COLORS[lang] || "#8b8b8b";
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+            ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        const $ = id => document.getElementById(id);
+        // pinned.json is kept up to date by .github/workflows/sync-pinned.yml.
+        // Read from raw.githubusercontent so it works without waiting for a Pages rebuild.
+        const PINNED_URL = `https://raw.githubusercontent.com/${GH_USER}/${GH_USER.toLowerCase()}.github.io/main/pinned.json`;
+        const state = { repos: [], pinned: [], lang: "All", q: "", sort: "updated", shown: PAGE };
+        const pinRank = r => { const i = state.pinned.indexOf(r.name.toLowerCase()); return i === -1 ? Infinity : i; };
 
-    <h3>D2L</h3>
-    <p>Software Developer / Test Developer</p>
+        /* ---------- Pixel icons: each letter is one pixel, "." is empty ---------- */
+        function px(rows, colors, scale = 3) {
+            let rects = "";
+            rows.forEach((row, y) => [...row].forEach((ch, x) => {
+                if (colors[ch]) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${colors[ch]}"/>`;
+            }));
+            const w = rows[0].length, h = rows.length;
+            return `<svg class="px" width="${w * scale}" height="${h * scale}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+        }
+        const STAR_ROWS = ["....o....", "...oyo...", "oooyyyooo", "oyyyyyyyo", ".oyyyyyo.", "..oyyyo..", ".oyyoyyo.", ".oyo.oyo.", ".oo...oo."];
+        const ICONS = {
+            star: px(STAR_ROWS, { o: "#7a4a12", y: "#ffd23f" }, 2),
+            bigStar: px(STAR_ROWS, { o: "#7a4a12", y: "#ffd23f" }, 3),
+            heart: px([".oo.oo.", "owrorro", "orrrrro", ".orrro.", "..oro..", "...o..."],
+                { o: "#5b1a1a", r: "#e5484d", w: "#ffffff" }, 3),
+            chest: px([".ooooooo.", "obbbbbbbo", "obbbbbbbo", "ooooyoooo", "obbbybbbo", "obbbbbbbo", "ooooooooo"],
+                { o: "#5b3417", b: "#b86b2e", y: "#ffd23f" }, 3),
+            sprout: px(["ll...ll", "lgl.lgl", ".lgggl.", "...g...", "...g...", ".ddddd.", "ddddddd"],
+                { l: "#7cc243", g: "#3f7f25", d: "#8b5a2b" }, 5),
+            pin: px([".rrr.", "rwrrr", "rrrrr", ".rrr.", "..g..", "..g..", "..g.."],
+                { r: "#e5484d", w: "#ffb3b3", g: "#6b6b6b" }, 3),
+            arrow: px(["..cccc", "....cc", "...c.c", "..c..c", ".c....", "c....."], { c: "currentColor" }, 3),
+            sun: px(["....y....", ".y.....y.", "...yyy...", "..yyyyy..", "y.yyyyy.y", "..yyyyy..", "...yyy...", ".y.....y.", "....y...."],
+                { y: "#ffd23f" }, 3),
+            moon: px(["...mmmm..", "..mmm....", ".mmm.....", ".mmm.....", ".mmm.....", ".mmmm....", "..mmmmmm.", "...mmmm.."],
+                { m: "#f4ecc2" }, 3)
+        };
+        document.querySelectorAll("[data-icon]").forEach(el => { el.innerHTML = ICONS[el.dataset.icon]; });
 
-    <h2>Projects</h2>
+        /* ---------- Day / night ---------- */
+        const root = document.documentElement;
+        function paintThemeBtn() {
+            const night = root.dataset.theme === "dark";
+            $("theme").innerHTML = night ? ICONS.sun : ICONS.moon;
+            $("theme").setAttribute("aria-label", night ? "Switch to day" : "Switch to night");
+        }
+        $("theme").addEventListener("click", () => {
+            root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+            try { localStorage.setItem("theme", root.dataset.theme); } catch (e) {}
+            paintThemeBtn();
+        });
+        paintThemeBtn();
 
-    <p>Coming soon!</p>
+        /* ---------- Data (cached for 10 min to stay under GitHub's rate limit) ---------- */
+        async function getJSON(url) {
+            const key = "gh:" + url;
+            try {
+                const c = JSON.parse(sessionStorage.getItem(key));
+                if (c && Date.now() - c.t < 10 * 60 * 1000) return c.d;
+            } catch (e) {}
+            const r = await fetch(url);
+            if (!r.ok) throw new Error(r.status);
+            const d = await r.json();
+            try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), d })); } catch (e) {}
+            return d;
+        }
 
-    <h2>Contact</h2>
-    <p>
-        <a href="https://github.com/AshleyKimm">GitHub</a>
-        <a href="https://linkedin.com/in/ashkimm">LinkedIn</a>
-    </p>
+        const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+        function ago(date) {
+            const s = (new Date(date) - Date.now()) / 1000;
+            for (const [unit, n] of [["year", 31536000], ["month", 2592000], ["week", 604800], ["day", 86400], ["hour", 3600], ["minute", 60]])
+                if (Math.abs(s) >= n) return rtf.format(Math.round(s / n), unit);
+            return "just now";
+        }
 
+        /* ---------- Rendering ---------- */
+        function renderProfile(u, repos) {
+            const stars = repos.reduce((n, r) => n + r.stargazers_count, 0);
+            const avatar = new URL(u.avatar_url);
+            avatar.searchParams.set("s", "40"); // tiny image, scaled up = pixel portrait
+            const el = $("gh-profile");
+            el.innerHTML = `
+                <img class="avatar" src="${esc(avatar)}" alt="">
+                <div class="gh-who">
+                    <a href="${esc(u.html_url)}" target="_blank" rel="noopener">@${esc(u.login)}</a>
+                    <p>${u.bio ? esc(u.bio) : `Exploring GitHub since ${new Date(u.created_at).getFullYear()}`}</p>
+                </div>
+                <div class="stats">
+                    <div class="stat">${ICONS.chest}<div><strong>${repos.length}</strong><span>projects</span></div></div>
+                    <div class="stat">${ICONS.bigStar}<div><strong>${stars}</strong><span>stars</span></div></div>
+                    <div class="stat">${ICONS.heart}<div><strong>${u.followers}</strong><span>followers</span></div></div>
+                </div>`;
+            el.hidden = false;
+        }
+
+        function languages() {
+            const counts = {};
+            state.repos.forEach(r => { if (r.language) counts[r.language] = (counts[r.language] || 0) + 1; });
+            return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        }
+
+        function renderFilters() {
+            const langs = languages();
+            const total = langs.reduce((n, [, c]) => n + c, 0);
+            const bar = $("lang-bar");
+            bar.classList.toggle("filtering", state.lang !== "All");
+            bar.innerHTML = langs.map(([l, c]) => `
+                <button style="--c:${color(l)};flex:${c}" data-lang="${esc(l)}" class="${state.lang === l ? "on" : ""}"
+                    title="${esc(l)}: ${c} project${c > 1 ? "s" : ""} (${Math.round(c / total * 100)}%)"
+                    aria-label="Show ${esc(l)} projects"></button>`).join("");
+            $("chips").innerHTML =
+                `<button class="btn chip" data-lang="All" aria-pressed="${state.lang === "All"}">All <small>${state.repos.length}</small></button>` +
+                langs.map(([l, c]) => `
+                    <button class="btn chip" data-lang="${esc(l)}" aria-pressed="${state.lang === l}">
+                        <i class="swatch" style="--c:${color(l)}"></i>${esc(l)} <small>${c}</small>
+                    </button>`).join("");
+        }
+
+        function card(r, i) {
+            const topics = (r.topics || []).slice(0, 3);
+            const pinned = pinRank(r) !== Infinity;
+            return `
+                <a class="panel repo ${pinned ? "pinned" : ""}" href="${esc(r.html_url)}" target="_blank" rel="noopener" style="--i:${i}">
+                    ${pinned ? `<span class="pin-badge">${ICONS.pin}Pinned</span>` : ""}
+                    <div class="repo-top"><span class="repo-name">${esc(r.name)}</span>${ICONS.arrow}</div>
+                    <p class="desc ${r.description ? "" : "none"}">${r.description ? esc(r.description) : "No description yet."}</p>
+                    ${topics.length ? `<div class="topics">${topics.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
+                    <div class="meta">
+                        ${r.language ? `<span><i class="swatch" style="--c:${color(r.language)}"></i>${esc(r.language)}</span>` : ""}
+                        <span>${ICONS.star}${r.stargazers_count}</span>
+                        <span>Updated ${ago(r.pushed_at)}</span>
+                    </div>
+                </a>`;
+        }
+
+        function renderRepos() {
+            const q = state.q.trim().toLowerCase();
+            const list = state.repos
+                .filter(r => state.lang === "All" || r.language === state.lang)
+                .filter(r => !q || r.name.toLowerCase().includes(q) || (r.description || "").toLowerCase().includes(q)
+                    || (r.topics || []).some(t => t.includes(q)))
+                .sort((a, b) => {
+                    // Pinned repos always come first, in the order they're pinned on GitHub
+                    const pa = pinRank(a), pb = pinRank(b);
+                    if (pa !== pb) return pa === Infinity ? 1 : pb === Infinity ? -1 : pa - pb;
+                    return {
+                        updated: () => new Date(b.pushed_at) - new Date(a.pushed_at),
+                        stars: () => b.stargazers_count - a.stargazers_count || new Date(b.pushed_at) - new Date(a.pushed_at),
+                        name: () => a.name.localeCompare(b.name)
+                    }[state.sort]();
+                });
+            const visible = list.slice(0, state.shown);
+            $("repos").innerHTML = visible.length ? visible.map(card).join("") : `<div class="panel empty">No projects match that.</div>`;
+            const left = list.length - visible.length;
+            $("more").hidden = left <= 0;
+            $("more").textContent = `Show ${Math.min(PAGE, left)} more`;
+        }
+
+        function render() { renderFilters(); renderRepos(); }
+
+        /* ---------- Interactions ---------- */
+        function setLang(lang) {
+            // Clicking the active language again clears the filter
+            state.lang = state.lang === lang && lang !== "All" ? "All" : lang;
+            state.shown = PAGE;
+            render();
+        }
+        $("chips").addEventListener("click", e => { const b = e.target.closest("[data-lang]"); if (b) setLang(b.dataset.lang); });
+        $("lang-bar").addEventListener("click", e => { const b = e.target.closest("[data-lang]"); if (b) setLang(b.dataset.lang); });
+        $("search").addEventListener("input", e => { state.q = e.target.value; state.shown = PAGE; renderRepos(); });
+        $("sort").addEventListener("change", e => { state.sort = e.target.value; renderRepos(); });
+        $("more").addEventListener("click", () => { state.shown += PAGE; renderRepos(); });
+
+        /* ---------- Load ---------- */
+        Promise.all([
+            getJSON(`https://api.github.com/users/${GH_USER}`),
+            getJSON(`https://api.github.com/users/${GH_USER}/repos?per_page=100&sort=pushed`),
+            getJSON(PINNED_URL).catch(() => []) // no pins is fine; just skip them
+        ]).then(([user, repos, pinned]) => {
+            state.pinned = Array.isArray(pinned) ? pinned.map(n => String(n).toLowerCase()) : [];
+            state.repos = repos.filter(r => !r.fork && !r.archived && !HIDDEN.has(r.name.toLowerCase()));
+            renderProfile(user, state.repos);
+            render();
+        }).catch(() => {
+            $("repos").innerHTML = `<div class="panel error">Couldn't reach GitHub right now. See my projects on
+                <a href="https://github.com/${GH_USER}" target="_blank" rel="noopener">GitHub</a>.</div>`;
+        });
+    </script>
 </body>
 </html>

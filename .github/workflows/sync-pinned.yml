@@ -1,0 +1,46 @@
+# Saves the repos pinned on your GitHub profile to pinned.json,
+# which the website reads to show pinned projects first.
+name: Sync pinned repos
+
+on:
+  schedule:
+    - cron: "17 6 * * *"   # once a day
+  workflow_dispatch:        # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch pinned repos
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          gh api graphql -f login="$OWNER" -f query='
+            query($login: String!) {
+              user(login: $login) {
+                pinnedItems(first: 6, types: REPOSITORY) {
+                  nodes { ... on Repository { name } }
+                }
+              }
+            }' > response.json
+          jq -c '[.data.user.pinnedItems.nodes[].name]' response.json > pinned.json
+          rm response.json
+          cat pinned.json
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- pinned.json; then
+            echo "Pinned repos unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pinned.json
+          git commit -m "Update pinned repos"
+          git push
