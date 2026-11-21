@@ -1,7 +1,7 @@
 # Once a day, saves GitHub data the website reads, so visitors don't call GitHub's API themselves
 # (it allows only 60 requests an hour per network):
 #   pinned.json       - the repos pinned on your profile, in order (shown in Projects)
-#   data/github.json  - your profile and project list
+#   data/github.json  - your profile and project list, with every language each project uses
 name: Sync GitHub data
 
 on:
@@ -43,12 +43,19 @@ jobs:
           mkdir -p data
           gh api "users/$OWNER" > user.json
           gh api "users/$OWNER/repos?per_page=100&sort=pushed" > repos.json
+          # Every language in each repo, most code first
+          echo '{}' > langs.json
+          for name in $(jq -r '.[].name' repos.json); do
+            gh api "repos/$OWNER/$name/languages"               | jq --arg n "$name" '{($n): (to_entries | sort_by(-.value) | map(.key))}' > one.json
+            jq -s '.[0] * .[1]' langs.json one.json > merged.json && mv merged.json langs.json
+          done
           # Keep only the fields the website uses
-          jq -c --slurpfile u user.json '{
+          jq -c --slurpfile u user.json --slurpfile l langs.json '{
               user: ($u[0] | {login, html_url, avatar_url, bio, created_at}),
-              repos: [.[] | {name, description, language, html_url, homepage, has_pages, fork, archived, pushed_at, topics}]
+              repos: [.[] | {name, description, language, html_url, homepage, has_pages, fork, archived, pushed_at, topics,
+                             languages: ($l[0][.name] // [])}]
             }' repos.json > data/github.json
-          rm user.json repos.json
+          rm user.json repos.json langs.json one.json
           jq '.repos | length' data/github.json
 
       - name: Commit if changed
