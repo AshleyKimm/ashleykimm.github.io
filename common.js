@@ -169,3 +169,68 @@ function jumpToPending() {
     try { sessionStorage.removeItem("jump"); } catch (e) {}
     el.scrollIntoView();
 }
+
+/* ---------- Night sky: stars that twinkle on their own, and the odd shooting star ---------- */
+(() => {
+    const sky = document.querySelector(".stars");
+    if (!sky) return;
+    const count = Math.round(Math.min(70, Math.max(25, innerWidth / 22)));
+    let stars = "";
+    for (let i = 0; i < count; i++) {
+        const big = Math.random() < 0.18;
+        stars += `<i class="star${big ? " big" : ""}" style="left:${(Math.random() * 100).toFixed(2)}%;` +
+            `top:${(Math.random() * 82).toFixed(2)}%;--dur:${(2 + Math.random() * 4).toFixed(2)}s;` +
+            `--delay:-${(Math.random() * 6).toFixed(2)}s"></i>`;
+    }
+    sky.innerHTML = stars;
+
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    function shootingStar() {
+        // Only at night, and not while the tab is in the background
+        if (root.dataset.theme === "dark" && !document.hidden) {
+            const s = document.createElement("i");
+            s.className = "shooting";
+            const tilt = 15 + Math.random() * 25;               // degrees below horizontal
+            const toRight = Math.random() < 0.5;
+            const dist = 250 + Math.random() * 250;
+            const dy = Math.round(dist * Math.tan(tilt * Math.PI / 180));
+            s.style.cssText = `left:${(toRight ? 5 : 30) + Math.random() * 60}%;top:${Math.random() * 22}%;` +
+                `--a:${toRight ? tilt : 180 - tilt}deg;--dx:${toRight ? dist : -dist}px;--dy:${dy}px`;
+            s.addEventListener("animationend", () => s.remove());
+            sky.appendChild(s);
+        }
+        setTimeout(shootingStar, 4000 + Math.random() * 8000);  // every 4-12 seconds
+    }
+    setTimeout(shootingStar, 1500 + Math.random() * 2500);
+})();
+
+/* ---------- Day sky: a bird (or a few) flies across now and then ---------- */
+(() => {
+    const hero = document.querySelector(".hero");
+    if (!hero || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const flock = document.createElement("div");
+    flock.className = "birds";
+    flock.setAttribute("aria-hidden", "true");
+    (hero.querySelector(".stars") || hero.firstChild).after(flock);  // behind the sign
+
+    function birds() {
+        // Only during the day, and not while the tab is in the background
+        if (root.dataset.theme !== "dark" && !document.hidden) {
+            const toLeft = Math.random() < 0.5;
+            const top = 4 + Math.random() * 10;                     // % down the sky: the open sky above the sign
+            const dur = 13 + Math.random() * 8;                     // seconds to cross
+            const n = 1 + Math.floor(Math.random() * 3);            // 1-3 birds
+            for (let i = 0; i < n; i++) {
+                const b = document.createElement("i");
+                b.className = "bird" + (toLeft ? " to-left" : "");
+                b.style.cssText = `top:calc(${top}% + ${i % 2 ? -10 : i * 8}px);--dur:${(dur + i * 0.4).toFixed(1)}s;` +
+                    `animation-delay:${(i * 0.5).toFixed(1)}s;--flap:-${(Math.random() * 0.36).toFixed(2)}s`;
+                b.innerHTML = "<i></i>";
+                b.addEventListener("animationend", e => { if (e.target === b) b.remove(); });
+                flock.appendChild(b);
+            }
+        }
+        setTimeout(birds, 8000 + Math.random() * 10000);         // every 8-18 seconds
+    }
+    setTimeout(birds, 2000 + Math.random() * 3000);
+})();
