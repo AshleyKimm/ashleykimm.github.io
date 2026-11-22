@@ -34,8 +34,19 @@ const ICONS = {
     fullscreen: px(["ccc.ccc", "c.....c", "c.....c", ".......", "c.....c", "c.....c", "ccc.ccc"], { c: "currentColor" }, 3),
     sun: px(["....y....", ".y.....y.", "...yyy...", "..yyyyy..", "y.yyyyy.y", "..yyyyy..", "...yyy...", ".y.....y.", "....y...."],
         { y: "#ffd23f" }, 3),
-    menu: px(["ccccccc", ".......", ".......", "ccccccc", ".......", ".......", "ccccccc"], { c: "currentColor" }, 3),
-    close: px(["c.....c", ".c...c.", "..c.c..", "...c...", "..c.c..", ".c...c.", "c.....c"], { c: "currentColor" }, 3),
+    // Inventory slots
+    house: px([".....oo.....", "....orro....", "...orrrro...", "..orrrrrro..", ".orrrrrrrro.", "oooooooooooo",
+               ".owwwwwwwwo.", ".owbbwwddwo.", ".owbbwwddwo.", ".owwwwwddwo.", ".oooooooooo."],
+        { o: "#4a2a12", r: "#c8453f", w: "#f3d9a4", b: "#6ec6f0", d: "#8a5424" }, 4),
+    briefcase: px(["....oooo....", "...o....o...", "oooooooooooo", "obbbbbbbbbbo", "obbbbbbbbbbo", "ooooooyyoooo",
+                   "obbbbbyybbbo", "obbbbbbbbbbo", "obbbbbbbbbbo", "oooooooooooo"],
+        { o: "#4a2a12", b: "#9c5f27", y: "#ffd23f" }, 4),
+    chestBig: px(["..oooooooo..", ".obbbbbbbbo.", "obbbbbbbbbbo", "oggggggggggo", "oooooyyooooo", "obbbbyybbbbo",
+                  "obbbbbbbbbbo", "oggggggggggo", "obbbbbbbbbbo", "oooooooooooo"],
+        { o: "#4a2a12", b: "#b86b2e", g: "#d9a441", y: "#ffd23f" }, 4),
+    joystick: px(["....rrrr....", "...rwrrrr...", "...rrrrrr...", "....rrrr....", ".....oo.....", ".....oo.....",
+                  ".oooooooooo.", "oggggggggggo", "ogyggggbgggo", "oggggggggggo", "oooooooooooo"],
+        { r: "#e5484d", w: "#ffb3b3", o: "#4a2a12", g: "#4b4b6e", y: "#ffd23f", b: "#5aa83a" }, 4),
     moon: px(["...mmmm..", "..mmm....", ".mmm.....", ".mmm.....", ".mmm.....", ".mmmm....", "..mmmmmm.", "...mmmm.."],
         { m: "#f4ecc2" }, 3)
 };
@@ -55,23 +66,6 @@ $("theme").addEventListener("click", () => {
 });
 paintThemeBtn();
 
-/* ---------- Phone menu (the nav links are hidden on narrow screens) ---------- */
-(() => {
-    const btn = $("menu"), nav = btn && btn.closest("nav");
-    if (!btn) return;
-    const set = open => {
-        nav.classList.toggle("open", open);
-        btn.setAttribute("aria-expanded", String(open));
-        btn.setAttribute("aria-label", open ? "Close menu" : "Menu");
-        btn.innerHTML = open ? ICONS.close : ICONS.menu;
-    };
-    set(false);
-    btn.addEventListener("click", () => set(!nav.classList.contains("open")));
-    $("nav-links").addEventListener("click", e => { if (e.target.closest("a")) set(false); });
-    // Tap outside the bar closes it. composedPath() is used because set() swaps out the tapped icon.
-    document.addEventListener("click", e => { if (!e.composedPath().includes(nav)) set(false); });
-    document.addEventListener("keydown", e => { if (e.key === "Escape") set(false); });
-})();
 
 /* ---------- GitHub data (cached for 10 min to stay under GitHub's rate limit) ---------- */
 const HIDDEN = new Set([`${GH_USER}.github.io`, GH_USER].map(n => n.toLowerCase()));
@@ -170,9 +164,14 @@ function buildDemos(repos = [], pinned = []) {
 const demoForRepo = (demos, name) => demos.find(d => String(d.repo || "").toLowerCase() === name.toLowerCase());
 
 /* ---------- Clean URLs: ashleykimm.github.io/arcade, no "#" ---------- */
-// GitHub Pages serves arcade.html at /arcade. Files opened straight from disk need the .html names.
+// GitHub Pages serves arcade.html at /arcade (and so on). Files opened straight from disk need the .html names.
 const LOCAL = location.protocol === "file:";
-const PAGES = { home: LOCAL ? "index.html" : "./", arcade: LOCAL ? "arcade.html" : "arcade" };
+const PAGES = {
+    home: LOCAL ? "index.html" : "./",
+    experience: LOCAL ? "experience.html" : "experience",
+    projects: LOCAL ? "projects.html" : "projects",
+    arcade: LOCAL ? "arcade.html" : "arcade"
+};
 document.querySelectorAll("a[data-page]").forEach(a => { a.href = PAGES[a.dataset.page]; });
 
 // Links with data-target scroll to that part of the page without adding "#..." to the address.
@@ -215,6 +214,13 @@ function jumpToPending() {
             `--delay:-${(Math.random() * 6).toFixed(2)}s"></i>`;
     }
     sky.innerHTML = stars;
+    // On the home page the sky is taller than the screen; shooting stars go in the part seen from the ground
+    let zone = sky;
+    if (document.querySelector(".home-scene")) {
+        zone = document.createElement("div");
+        zone.className = "shoot-zone";
+        sky.appendChild(zone);
+    }
 
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     function shootingStar() {
@@ -229,7 +235,7 @@ function jumpToPending() {
             s.style.cssText = `left:${(toRight ? 5 : 30) + Math.random() * 60}%;top:${Math.random() * 22}%;` +
                 `--a:${toRight ? tilt : 180 - tilt}deg;--dx:${toRight ? dist : -dist}px;--dy:${dy}px`;
             s.addEventListener("animationend", () => s.remove());
-            sky.appendChild(s);
+            zone.appendChild(s);
         }
         setTimeout(shootingStar, 4000 + Math.random() * 8000);  // every 4-12 seconds
     }
@@ -266,4 +272,65 @@ function jumpToPending() {
         setTimeout(birds, 8000 + Math.random() * 10000);         // every 8-18 seconds
     }
     setTimeout(birds, 2000 + Math.random() * 3000);
+})();
+
+/* ---------- Inventory hotbar: the site's navigation, at the bottom of every page ---------- */
+(() => {
+    const SLOTS = [
+        { page: "home", label: "Home", icon: ICONS.house },
+        { page: "experience", label: "Experience", icon: ICONS.briefcase },
+        { page: "projects", label: "Projects", icon: ICONS.chestBig },
+        { page: "arcade", label: "Arcade", icon: ICONS.joystick }
+    ];
+    const EMPTY = 4;  // empty slots, just for the inventory look (hidden on phones)
+    const here = document.body.dataset.page;
+    const bar = document.createElement("div");
+    bar.className = "inventory";
+    bar.setAttribute("role", "navigation");
+    bar.setAttribute("aria-label", "Site");
+    bar.innerHTML = SLOTS.map((s, i) =>
+        `<a class="slot" href="${PAGES[s.page]}" data-label="${s.label}" aria-label="${s.label}"` +
+        `${s.page === here ? ' aria-current="page"' : ""}><span class="key" aria-hidden="true">${i + 1}</span>${s.icon}</a>`
+    ).join("") + '<span class="slot empty" aria-hidden="true"></span>'.repeat(EMPTY);
+    document.body.appendChild(bar);
+
+    // Number keys 1-4 jump to a slot, like a game hotbar
+    addEventListener("keydown", e => {
+        if (e.ctrlKey || e.metaKey || e.altKey || e.target.isContentEditable || /^(input|textarea|select)$/i.test(e.target.tagName)) return;
+        const slot = SLOTS[Number(e.key) - 1];
+        if (slot && slot.page !== here) location.href = PAGES[slot.page];
+    });
+})();
+
+/* ---------- Home intro: start high in the sky, then slowly pan down to the ground ---------- */
+(() => {
+    const world = $("world");
+    if (!world) return;
+    let navType = "navigate", fromSite = false;
+    try { navType = performance.getEntriesByType("navigation")[0].type; } catch (e) {}
+    try { fromSite = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch (e) {}
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Plays on a fresh visit or a reload; skipped when moving between this site's pages
+    if (reduce || navType === "back_forward" || (fromSite && navType !== "reload")) {
+        world.classList.add("instant", "landed");
+        return;
+    }
+    let done = false;
+    world.addEventListener("transitionend", () => { done = true; });
+    const land = () => world.classList.add("landed");
+    const skip = () => {
+        if (done) return;
+        // Jump from wherever the camera is to the ground, quickly
+        const now = getComputedStyle(world).transform;
+        world.classList.add("instant");
+        world.style.transform = now;
+        void world.offsetHeight;
+        world.classList.remove("instant");
+        world.classList.add("fast", "landed");
+        world.style.transform = "";
+    };
+    setTimeout(land, 700);  // a moment in the sky first
+    // Any click, scroll, key or touch skips ahead
+    ["pointerdown", "wheel", "keydown", "touchstart"].forEach(ev =>
+        addEventListener(ev, skip, { once: true, passive: true }));
 })();

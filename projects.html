@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Projects - Ashley Kim</title>
+    <meta name="description" content="Projects by Ashley Kim, with playable demos in the Arcade.">
+    <link rel="icon" type="image/png" href="avatar.png">
+    <!-- Link preview card (LinkedIn, Discord, iMessage, ...) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ashley Kim">
+    <meta property="og:title" content="Projects - Ashley Kim">
+    <meta property="og:description" content="Projects by Ashley Kim, with playable demos in the Arcade.">
+    <meta property="og:url" content="https://ashleykimm.github.io/projects">
+    <meta property="og:image" content="https://ashleykimm.github.io/images/og-card.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Pixel-art Ashley next to a wooden sign reading Ashley Kim">
+    <meta name="twitter:card" content="summary_large_image">
+    <script>
+        // Pick day/night before first paint: saved choice, else the system setting
+        (function () {
+            let t = null;
+            try { t = localStorage.getItem("theme"); } catch (e) {}
+            if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            document.documentElement.dataset.theme = t;
+        })();
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body data-page="projects">
+    <nav>
+        <div class="wrap">
+            <a class="logo" href="./" data-page="home">ashley kim</a>
+            <button class="icon-btn" id="theme"></button>
+        </div>
+    </nav>
+
+    <header class="hero small">
+        <div class="stars" aria-hidden="true"></div>
+        <div class="orb" aria-hidden="true"></div>
+        <div class="cloud c1" aria-hidden="true"></div>
+        <div class="cloud c2" aria-hidden="true"></div>
+        <div class="wrap hero-inner">
+            <div class="sign-col">
+                <div class="sign">
+                    <h1>Projects</h1>
+                    <p>Things I've built. Pinned ones first.</p>
+                </div>
+                <div class="posts" aria-hidden="true"></div>
+            </div>
+        </div>
+        <div class="ground" aria-hidden="true"></div>
+    </header>
+
+    <section class="page-end">
+        <div class="wrap">
+            <div class="panel gh-profile" id="gh-profile" hidden></div>
+            <div class="repos" id="repos">
+                <div class="panel loading">Loading projects...</div>
+            </div>
+            <a class="btn more" href="https://github.com/AshleyKimm?tab=repositories" target="_blank" rel="noopener">See all projects on GitHub</a>
+        </div>
+    </section>
+
+    <script src="arcade.js"></script>
+    <script src="common.js"></script>
+    <script>
+        const LANG_COLORS = {
+            "Python": "#3572A5", "C++": "#f34b7d", "C": "#555555", "C#": "#178600", "Java": "#b07219",
+            "JavaScript": "#f1e05a", "TypeScript": "#3178c6", "HTML": "#e34c26", "CSS": "#663399",
+            "QML": "#44a51c", "Jupyter Notebook": "#DA5B0B", "Go": "#00ADD8", "Rust": "#dea584",
+            "Shell": "#89e051", "Kotlin": "#A97BFF", "Swift": "#F05138", "CMake": "#DA3434",
+            "QMake": "#7fa1c7", "Makefile": "#427819", "PowerShell": "#012456", "Batchfile": "#C1F12E",
+            "SCSS": "#c6538c", "Dockerfile": "#384d54", "Jupyter": "#DA5B0B", "SQL": "#e38c00"
+        };
+        const color = lang => LANG_COLORS[lang] || "#8b8b8b";
+        const FALLBACK_COUNT = 6; // shown if nothing is pinned
+        const state = { repos: [], pinned: [], demos: [] };
+
+        function renderProfile(u, repos) {
+            const avatar = new URL(u.avatar_url);
+            avatar.searchParams.set("s", "40"); // tiny image, scaled up = pixel portrait
+            const el = $("gh-profile");
+            el.innerHTML = `
+                <img class="avatar" src="${esc(avatar)}" alt="">
+                <div class="gh-who">
+                    <a href="${esc(u.html_url)}" target="_blank" rel="noopener">@${esc(u.login)}</a>
+                    <p>${u.bio ? esc(u.bio) : `Exploring GitHub since ${new Date(u.created_at).getFullYear()}`}</p>
+                </div>
+                <div class="stat">${ICONS.chest}<span>${repos.length} projects</span></div>`;
+            el.hidden = false;
+        }
+
+        function card(r, i) {
+            const topics = (r.topics || []).slice(0, 3);
+            const demo = demoForRepo(state.demos, r.name);
+            // Every language in the repo (from the saved data); the live API only gives the main one
+            const langs = Array.isArray(r.languages) && r.languages.length ? r.languages : (r.language ? [r.language] : []);
+            return `
+                <div class="panel repo" style="--i:${i}">
+                    ${rankIn(state.pinned, r.name) !== Infinity ? `<span class="pin-badge">${ICONS.pin}Pinned</span>` : ""}
+                    <div class="repo-top"><a class="repo-name" href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(r.name)}</a>${ICONS.arrow}</div>
+                    <p class="desc ${r.description ? "" : "none"}">${r.description ? esc(r.description) : "No description yet."}</p>
+                    ${demo ? `<a class="btn primary play" href="${PAGES.arcade}" data-target="${esc(demo.id)}">${ICONS.play}Play demo</a>` : ""}
+                    ${topics.length ? `<div class="topics">${topics.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
+                    ${langs.length ? `<div class="meta" aria-label="Languages">${langs.map(l =>
+                        `<span><i class="swatch" style="--c:${color(l)}"></i>${esc(l)}</span>`).join("")}</div>` : ""}
+                </div>`;
+        }
+
+        // Hand-picked: the repos pinned on GitHub, in pin order. Nothing pinned? The most recently updated ones.
+        function featured() {
+            const pinned = state.repos.filter(r => rankIn(state.pinned, r.name) !== Infinity)
+                .sort((a, b) => rankIn(state.pinned, a.name) - rankIn(state.pinned, b.name));
+            if (pinned.length) return pinned;
+            return [...state.repos].sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at)).slice(0, FALLBACK_COUNT);
+        }
+
+        loadGitHub().then(({ user, repos, pinned }) => {
+            state.pinned = pinned;
+            state.repos = repos;
+            state.demos = buildDemos(repos, pinned);
+            renderProfile(user, repos);
+            const list = featured();
+            $("repos").innerHTML = list.length ? list.map(card).join("") : `<div class="panel empty">Projects coming soon!</div>`;
+        }).catch(() => {
+            $("repos").innerHTML = `<div class="panel error">Couldn't reach GitHub right now. See my projects on
+                <a href="https://github.com/${GH_USER}" target="_blank" rel="noopener">GitHub</a>.</div>`;
+        });
+    </script>
+</body>
+</html>

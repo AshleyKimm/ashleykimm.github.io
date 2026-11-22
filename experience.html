@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Experience - Ashley Kim</title>
+    <meta name="description" content="Ashley Kim's work experience: roles, dates and the tools used.">
+    <link rel="icon" type="image/png" href="avatar.png">
+    <!-- Link preview card (LinkedIn, Discord, iMessage, ...) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ashley Kim">
+    <meta property="og:title" content="Experience - Ashley Kim">
+    <meta property="og:description" content="Ashley Kim's work experience: roles, dates and the tools used.">
+    <meta property="og:url" content="https://ashleykimm.github.io/experience">
+    <meta property="og:image" content="https://ashleykimm.github.io/images/og-card.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Pixel-art Ashley next to a wooden sign reading Ashley Kim">
+    <meta name="twitter:card" content="summary_large_image">
+    <script>
+        // Pick day/night before first paint: saved choice, else the system setting
+        (function () {
+            let t = null;
+            try { t = localStorage.getItem("theme"); } catch (e) {}
+            if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+            document.documentElement.dataset.theme = t;
+        })();
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body data-page="experience">
+    <nav>
+        <div class="wrap">
+            <a class="logo" href="./" data-page="home">ashley kim</a>
+            <button class="icon-btn" id="theme"></button>
+        </div>
+    </nav>
+
+    <header class="hero small">
+        <div class="stars" aria-hidden="true"></div>
+        <div class="orb" aria-hidden="true"></div>
+        <div class="cloud c1" aria-hidden="true"></div>
+        <div class="cloud c2" aria-hidden="true"></div>
+        <div class="wrap hero-inner">
+            <div class="sign-col">
+                <div class="sign">
+                    <h1>Experience</h1>
+                    <p>Where I've worked, and the tools I used there.</p>
+                </div>
+                <div class="posts" aria-hidden="true"></div>
+            </div>
+        </div>
+        <div class="ground" aria-hidden="true"></div>
+    </header>
+
+    <section class="page-end">
+        <div class="wrap">
+            <div class="panel journal">
+                <ul>
+                    <li><img class="logo-tile" src="images/logos/nokia.png" alt="Nokia logo" width="24" height="24"><div class="job"><h3>Nokia</h3>
+                            <div class="role"><div class="role-head"><p class="role-title">Cybersecurity Dome Test Automation</p><span class="dates">Sep 2025 - Dec 2025</span></div>
+                                <ul class="tools" aria-label="Tools used"><li>Python</li><li>Robot Framework</li><li>Kubernetes</li><li>kubectl</li><li>OpenLens</li><li>Azure</li></ul></div>
+                        </div></li>
+                    <li><img class="logo-tile" src="images/logos/dayforce.png" alt="Dayforce logo" width="24" height="24"><div class="job"><h3>Dayforce</h3>
+                            <div class="role"><div class="role-head"><p class="role-title">Software Developer</p><span class="dates">Jan 2025 - Aug 2025</span></div>
+                                <ul class="tools" aria-label="Tools used"><li>C#</li><li>Selenium</li><li>SpecFlow</li><li>Cucumber</li><li>Grafana</li><li>SonarQube</li><li>Postman</li><li>SQL Server</li></ul></div>
+                        </div></li>
+                    <li><img class="logo-tile" src="images/logos/d2l.png" alt="D2L logo" width="24" height="24"><div class="job"><h3>D2L</h3>
+                            <div class="role"><div class="role-head"><p class="role-title">Software Developer</p><span class="dates">May 2024 - Aug 2024</span></div>
+                                <ul class="tools" aria-label="Tools used"><li>C#</li><li>NUnit</li><li>Moq</li><li>Playwright</li><li>JavaScript</li><li>TypeScript</li><li>XML</li></ul></div>
+                            <div class="role"><div class="role-head"><p class="role-title">Software Test Developer</p><span class="dates">Sep 2023 - Dec 2023</span></div>
+                                <ul class="tools" aria-label="Tools used"><li>C#</li><li>Puppeteer</li><li>AWS CloudWatch</li></ul></div>
+                        </div></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <script src="arcade.js"></script>
+    <script src="common.js"></script>
+</body>
+</html>
