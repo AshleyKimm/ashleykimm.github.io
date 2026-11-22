@@ -342,6 +342,41 @@ function goTo(page) {
         </div>`;
     document.body.appendChild(hud);
 
+    // Phones: press and hold a slot to see its name; slide the finger along the bar and the name
+    // follows. Letting go after that doesn't open anything; a quick tap still does.
+    let holdTimer = null, peeking = null, held = false, swallowClick = false;
+    const slotAt = (x, y) => { const el = document.elementFromPoint(x, y); return el && el.closest(".hud a.slot"); };
+    const peek = slot => {
+        if (slot === peeking) return;
+        if (peeking) peeking.classList.remove("peek");
+        peeking = slot;
+        if (slot) slot.classList.add("peek");
+    };
+    const endHold = () => {
+        clearTimeout(holdTimer); holdTimer = null;
+        if (held) {                         // that press was for looking, not for going
+            swallowClick = true;
+            setTimeout(() => { swallowClick = false; }, 400);   // only the click right after it
+        }
+        held = false; peek(null);
+    };
+    hud.addEventListener("pointerdown", e => {
+        if (e.pointerType !== "touch") return;
+        swallowClick = false;
+        const start = { x: e.clientX, y: e.clientY };
+        holdTimer = setTimeout(() => { held = true; peek(slotAt(start.x, start.y)); }, 350);
+    });
+    hud.addEventListener("pointermove", e => {
+        if (e.pointerType !== "touch" || (!held && !holdTimer)) return;
+        if (!held) { clearTimeout(holdTimer); holdTimer = null; held = true; }  // sliding counts as holding
+        peek(slotAt(e.clientX, e.clientY));
+    });
+    ["pointerup", "pointercancel"].forEach(ev => hud.addEventListener(ev, e => { if (e.pointerType === "touch") endHold(); }));
+    hud.addEventListener("contextmenu", e => e.preventDefault());   // no "open link" menu on long press
+    hud.addEventListener("click", e => {
+        if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation(); }
+    }, true);
+
     hud.addEventListener("click", e => {
         const a = e.target.closest("a[data-nav]");
         if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
@@ -377,7 +412,11 @@ function goTo(page) {
     if (!("onpagereveal" in window)) { if (arriving) document.body.classList.add("rising"); return; }
     addEventListener("pagereveal", e => {
         if (!e.viewTransition) { if (arriving) document.body.classList.add("rising"); return; }
-        if (!arriving) { e.viewTransition.skipTransition(); return; }  // only Home -> page slides; others switch normally
+        if (!arriving) {                    // only Home -> page slides; others switch normally
+            e.viewTransition.ready.catch(() => {});   // skipping rejects this promise; that's expected
+            e.viewTransition.skipTransition();
+            return;
+        }
         root.dataset.vt = "descend";
         root.style.setProperty("--lift", groundY + "px");
         e.viewTransition.finished.finally(() => { delete root.dataset.vt; });

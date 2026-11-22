@@ -423,7 +423,11 @@ a.slot::after {
     background: var(--paper-light); box-shadow: var(--notch); z-index: 1;
     visibility: hidden; pointer-events: none;
 }
-a.slot:hover::after, a.slot:focus-visible::after { visibility: visible; }
+a.slot:hover::after, a.slot:focus-visible::after, a.slot.peek::after { visibility: visible; }
+a.slot.peek { background: #d8ad6f; }
+a.slot.peek .px { transform: translateY(-3px); }
+/* Phones: long-press shows names (common.js), so stop the browser's own long-press callout and text selection */
+.hud { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: none; }
 @media (max-width: 900px) { .slot.empty:not(.divider) { display: none; } }   /* keep the divider slot */
 @media (max-width: 560px) {
     .hud { bottom: 8px; }
