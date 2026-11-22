@@ -75,6 +75,12 @@
         const FALLBACK_COUNT = 6; // shown if nothing is pinned
         const state = { repos: [], pinned: [], demos: [] };
 
+        // Year of the oldest project (some repos are older than the GitHub account itself)
+        function firstYear(u, repos) {
+            const years = repos.map(r => r.created_at).filter(Boolean).map(d => new Date(d).getFullYear());
+            return Math.min(new Date(u.created_at).getFullYear(), ...years);
+        }
+
         function renderProfile(u, repos) {
             const avatar = new URL(u.avatar_url);
             avatar.searchParams.set("s", "40"); // tiny image, scaled up = pixel portrait
@@ -83,7 +89,7 @@
                 <img class="avatar" src="${esc(avatar)}" alt="">
                 <div class="gh-who">
                     <a href="${esc(u.html_url)}" target="_blank" rel="noopener">@${esc(u.login)}</a>
-                    <p>${u.bio ? esc(u.bio) : `Exploring GitHub since ${new Date(u.created_at).getFullYear()}`}</p>
+                    <p>${u.bio ? esc(u.bio) : `Building projects since ${firstYear(u, repos)}`}</p>
                 </div>
                 <div class="stat">${ICONS.chest}<span>${repos.length} projects</span></div>`;
             el.hidden = false;

@@ -52,7 +52,7 @@ jobs:
           # Keep only the fields the website uses
           jq -c --slurpfile u user.json --slurpfile l langs.json '{
               user: ($u[0] | {login, html_url, avatar_url, bio, created_at}),
-              repos: [.[] | {name, description, language, html_url, homepage, has_pages, fork, archived, pushed_at, topics,
+              repos: [.[] | {name, description, language, html_url, homepage, has_pages, fork, archived, created_at, pushed_at, topics,
                              languages: ($l[0][.name] // [])}]
             }' repos.json > data/github.json
           rm user.json repos.json langs.json one.json
