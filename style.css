@@ -135,13 +135,14 @@ nav .wrap { display: flex; align-items: center; gap: 16px; height: 56px; }
 }
 .sign .eyebrow { color: #ffe9a8; }
 .sign h1 { font-size: 60px; margin: 8px 0 20px; text-shadow: 4px 4px 0 var(--outline); }
-.sign .btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; text-shadow: none; }
+.sign .btns { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; text-shadow: none; }
+.connect-label { margin-right: 8px; color: #ffe9a8; text-shadow: 2px 2px 0 var(--outline); }
 @media (max-width: 520px) {
     .sign h1 { font-size: 40px; }
-    /* "See my projects" on its own row, GitHub / LinkedIn / Email side by side under it */
+    /* "Let's connect" on its own row, GitHub / LinkedIn / Email side by side under it */
     .sign .btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
     .sign .btns .btn { justify-content: center; padding-left: 4px; padding-right: 4px; min-width: 0; }
-    .sign .btns .btn.primary { grid-column: 1 / -1; }
+    .sign .btns .connect-label { grid-column: 1 / -1; margin: 0 0 4px; text-align: center; }
 }
 .scene { position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: center; gap: 16px; width: 100%; }
 .sign-col { display: flex; flex-direction: column; align-items: center; width: min(100%, 640px); }
