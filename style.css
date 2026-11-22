@@ -442,19 +442,18 @@ body.rising > section { animation: rise-in .8s cubic-bezier(.2, .8, .3, 1) both;
 @keyframes rise-in { from { transform: translateY(40vh); opacity: 0; } }
 
 /* Cross-page View Transition (Chrome, Edge, Safari 18.2+): Home -> another page.
-   The home ground rises to where the new page's grass sits (--lift = the difference). The old page slides
-   up by --lift while the new page rises from --lift below, so the two grass lines stay lined up the whole
-   way; the new page's sky and sign are revealed from the grass line up (--clip-top) as the old sky leaves. */
+   The home ground rises all the way to the top of the screen. The old page slides up by --lift (its grass
+   line) while the new page, opened at its own grass strip, rises from --lift below: the two grass lines
+   stay lined up the whole way, like one strip of ground going up with the page underneath coming into view. */
 @view-transition { navigation: auto; }
 .hud { view-transition-name: hud; }               /* the bottom bar and the day/night button stay still */
 .theme-float { view-transition-name: theme-button; }
 /* Plain layering (the browser's default blend would wash the two pages together) */
 html[data-vt="descend"]::view-transition-old(root),
 html[data-vt="descend"]::view-transition-new(root) { mix-blend-mode: normal; opacity: 1; }
-html[data-vt="descend"]::view-transition-old(root) { animation: vt-ground-up .9s cubic-bezier(.45, 0, .25, 1) both; }
-html[data-vt="descend"]::view-transition-new(root) { animation: vt-page-in .9s cubic-bezier(.45, 0, .25, 1) both; }
+html[data-vt="descend"]::view-transition-old(root) { animation: vt-ground-up 1.1s cubic-bezier(.65, 0, .35, 1) both; }
+html[data-vt="descend"]::view-transition-new(root) { animation: vt-page-in 1.1s cubic-bezier(.65, 0, .35, 1) both; }
 @keyframes vt-ground-up { to { transform: translateY(calc(-1 * var(--lift, 0px))); } }
-@keyframes vt-page-in {
-    from { transform: translateY(var(--lift, 0px)); clip-path: inset(var(--clip-top, 0px) 0 0 0); }
-    to { transform: none; clip-path: inset(0 0 0 0); }
-}
+@keyframes vt-page-in { from { transform: translateY(var(--lift, 0px)); } }
+/* Arriving this way, cards are simply there (their pop-in would jitter during the slide) */
+body.arrived .repo, body.arrived .widget { animation: none; }

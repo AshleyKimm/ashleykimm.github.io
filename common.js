@@ -313,8 +313,8 @@ function goTo(page) {
     const groundY = Math.round(ground.getBoundingClientRect().top);
     try { sessionStorage.setItem("enter", "down"); sessionStorage.setItem("groundY", String(groundY)); } catch (e) {}
     if (PAGE_TRANSITIONS) { location.href = PAGES[page]; return; }
-    // Other browsers: slide up to about where the other pages' grass sits, then go
-    const lift = Math.max(0, groundY - 260);
+    // Other browsers: slide the home scene up until its ground reaches the top, then go
+    const lift = Math.max(0, groundY);
     scene.classList.add("leaving");
     scene.style.transform = `translateY(${-lift}px)`;
     let gone = false;
@@ -356,7 +356,10 @@ function goTo(page) {
     });
 })();
 
-/* ---------- Arriving from Home: the ground keeps rising until it reaches this page's grass ---------- */
+/* ---------- Arriving from Home: the ground keeps rising to the top of the screen ---------- */
+// This page opens scrolled so its own grass strip is at the very top. In browsers with View Transitions
+// the home page slides up by `groundY` (its grass line) while this page rises from `groundY` below, so the
+// two grass lines stay lined up all the way to the top. Other browsers get a rise-in instead.
 (() => {
     let from = null, groundY = 0;
     try {
@@ -365,14 +368,18 @@ function goTo(page) {
     } catch (e) {}
     const ground = document.querySelector(".hero .ground");
     const arriving = from === "down" && ground && !document.querySelector(".home-scene");
+    if (arriving) {
+        const top = ground.getBoundingClientRect().top + scrollY;
+        document.body.style.minHeight = (top + innerHeight) + "px";  // room to scroll even before content loads
+        scrollTo({ top, behavior: "instant" });
+        document.body.classList.add("arrived");                       // cards appear in place, no pop mid-slide
+    }
     if (!("onpagereveal" in window)) { if (arriving) document.body.classList.add("rising"); return; }
     addEventListener("pagereveal", e => {
         if (!e.viewTransition) { if (arriving) document.body.classList.add("rising"); return; }
         if (!arriving) { e.viewTransition.skipTransition(); return; }  // only Home -> page slides; others switch normally
-        const groundHere = Math.round(ground.getBoundingClientRect().top);
         root.dataset.vt = "descend";
-        root.style.setProperty("--lift", (groundY - groundHere) + "px");   // home grass line -> this page's grass line
-        root.style.setProperty("--clip-top", groundHere + "px");           // reveal this page's sky from the grass up
+        root.style.setProperty("--lift", groundY + "px");
         e.viewTransition.finished.finally(() => { delete root.dataset.vt; });
     }, { once: true });
 })();

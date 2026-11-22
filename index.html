@@ -63,6 +63,8 @@
         // Old links to sections of the home page now go to their own pages
         const moved = { "#experience": "experience", "#projects": "projects" }[location.hash];
         if (moved) location.replace(PAGES[moved]);
+        // Fetch the project data in the background, so Projects and Arcade open with it ready (no pop-in mid-slide)
+        addEventListener("load", () => setTimeout(() => loadGitHub().catch(() => {}), 1500));
     </script>
 </body>
 </html>
