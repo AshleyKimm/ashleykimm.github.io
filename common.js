@@ -334,3 +334,73 @@ function jumpToPending() {
     ["pointerdown", "wheel", "keydown", "touchstart"].forEach(ev =>
         addEventListener(ev, skip, { once: true, passive: true }));
 })();
+
+/* ---------- Home: the avatar strolls left and right along the ground ---------- */
+// Stands facing forward for a few seconds, walks to a random spot (alternating the two walking
+// frames for that direction), then faces forward again. Always stays inside the window.
+(() => {
+    const el = $("walker");
+    if (!el) return;
+    const img = el.querySelector("img");
+    const DIR = "images/avatar/";
+    const FRAMES = {
+        front: [DIR + "front.png"],
+        left: [DIR + "walk-left-1.png", DIR + "walk-left-2.png"],
+        right: [DIR + "walk-right-1.png", DIR + "walk-right-2.png"]
+    };
+    Object.values(FRAMES).flat().forEach(src => { new Image().src = src; });  // preload, so steps don't flicker
+
+    const SPEED = 70;      // pixels per second
+    const STEP_MS = 220;   // how long each walking frame shows
+    const show = src => { if (img.getAttribute("src") !== src) img.setAttribute("src", src); };
+    const range = () => Math.max(0, el.parentElement.clientWidth - el.offsetWidth);  // keeps it in the window
+
+    let x = range() * 0.72;        // start to the right of the sign
+    let target = null, idleUntil = performance.now() + 2500, frame = 0, frameAt = 0, last = 0;
+
+    // Hop while the mouse is over the avatar (it doesn't take clicks, so this checks the position)
+    let mouse = null;
+    addEventListener("pointermove", e => { mouse = e.pointerType === "mouse" ? { x: e.clientX, y: e.clientY } : null; }, { passive: true });
+    document.addEventListener("pointerleave", () => { mouse = null; });
+    const overAvatar = () => {
+        if (!mouse) return false;
+        const r = el.getBoundingClientRect();  // the figure fills roughly the middle of the image
+        return mouse.x > r.left + r.width * .24 && mouse.x < r.right - r.width * .22 &&
+               mouse.y > r.top + r.height * .12 && mouse.y < r.bottom - r.height * .06;
+    };
+
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function tick(t) {
+        const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+        last = t;
+        const max = range();
+        x = Math.min(max, Math.max(0, x));
+        if (target !== null) target = Math.min(max, Math.max(0, target));  // window got smaller
+
+        if (target === null) {
+            show(FRAMES.front[0]);
+            if (!still && t >= idleUntil && !document.hidden && max > 0) {
+                // Pick a new spot at least 100px away (if there's room)
+                let next;
+                do { next = Math.random() * max; } while (max > 200 && Math.abs(next - x) < 100);
+                target = next; frame = 0; frameAt = t;
+            }
+        } else {
+            const left = target < x;
+            const step = SPEED * dt;
+            if (Math.abs(target - x) <= step) {
+                x = target; target = null;
+                idleUntil = t + 1500 + Math.random() * 3500;  // rest 1.5-5 seconds
+                show(FRAMES.front[0]);
+            } else {
+                x += left ? -step : step;
+                if (t - frameAt >= STEP_MS) { frame ^= 1; frameAt = t; }
+                show(FRAMES[left ? "left" : "right"][frame]);
+            }
+        }
+        el.style.transform = `translateX(${Math.round(x)}px)`;
+        el.classList.toggle("hop", overAvatar());
+        requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+})();

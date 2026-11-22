@@ -141,22 +141,23 @@ h1, h2, h3 { font-weight: normal; margin: 0; line-height: 1.1; }
 }
 .scene { position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: center; gap: 16px; width: 100%; }
 .sign-col { display: flex; flex-direction: column; align-items: center; width: min(100%, 640px); }
-/* The box stays put and catches the hover; only the picture inside hops,
-   so the mouse doesn't slip off mid-jump and make it stutter. Not clickable. */
-.hero-avatar { display: block; width: 250px; height: 250px; flex: none; margin-bottom: -16px; cursor: default; }
-.hero-avatar img {
-    display: block; width: 100%; height: 100%;
-    image-rendering: pixelated; user-select: none; -webkit-user-drag: none;
-}
-.hero-avatar:hover img { animation: hop .5s steps(4) infinite; } /* keeps hopping while hovered */
-@keyframes hop { 50% { transform: translateY(-16px); } }
 .posts { position: relative; width: 100%; height: 48px; }
-@media (max-width: 860px) {
-    .posts { height: 160px; }
-    .hero-avatar {
-        position: absolute; left: 50%; bottom: 0; width: 160px; height: 160px;
-        translate: -50% 0; margin-bottom: -12px;
-    }
+
+/* ---------- Home: the avatar walking along the ground (moved by common.js) ---------- */
+/* The art is drawn in 5px blocks at 250px; 200px (desktop) and 150px (phones) keep every block whole.
+   It never blocks clicks; common.js makes it hop while the mouse is over it. */
+.walker {
+    position: absolute; left: 0; bottom: 92px; z-index: 2; width: 200px; height: 200px;
+    pointer-events: none; will-change: transform;
+}
+.walker img { display: block; width: 100%; height: 100%; image-rendering: pixelated; user-select: none; }
+.walker.hop img { animation: hop .5s steps(4) infinite; }
+@keyframes hop { 50% { transform: translateY(-16px); } }
+/* Taller posts on the home sign, so the avatar walks underneath it and never covers the buttons */
+.home-scene .posts { height: 210px; }
+@media (max-width: 560px) {
+    .walker { width: 150px; height: 150px; bottom: 95px; }
+    .home-scene .posts { height: 160px; }
 }
 .posts::before, .posts::after {
     content: ""; position: absolute; top: 4px; bottom: 0; width: 16px;
