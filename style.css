@@ -63,13 +63,8 @@ h1, h2, h3 { font-weight: normal; margin: 0; line-height: 1.1; }
 .btn:active { transform: translateY(2px); box-shadow: var(--notch); }
 .btn.primary { background: var(--green-btn); }
 
-/* ---------- Nav ---------- */
-nav {
-    position: sticky; top: 0; z-index: 10; color: var(--paper-light);
-    background: #7d4620; box-shadow: 0 4px 0 var(--outline);
-}
-nav .wrap { display: flex; align-items: center; gap: 16px; height: 56px; }
-.logo { text-decoration: none; margin-right: auto; font-size: 30px; text-shadow: 2px 2px 0 var(--outline); }
+/* ---------- Day/night toggle (floats in the top-right corner) ---------- */
+.theme-float { position: fixed; top: 12px; right: 16px; z-index: 30; }
 .icon-btn {
     width: 40px; height: 40px; display: grid; place-items: center; cursor: pointer; padding: 0;
     color: var(--paper-light); background: var(--wood); border: 0; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .25), var(--notch);
@@ -345,7 +340,7 @@ section h2 {
 /* ---------- Home: one full-screen scene with a tall sky ---------- */
 /* The "world" is 2.5 screens tall: 1.5 screens of sky above the ground scene.
    It starts showing the top of the sky, then pans down (common.js adds .landed). */
-.home-scene { height: calc(100vh - 56px); height: calc(100svh - 56px); min-height: 560px; background: none; }
+.home-scene { height: 100vh; height: 100svh; min-height: 560px; background: none; }
 .world {
     position: absolute; left: 0; right: 0; top: 0; height: 250%;
     background: linear-gradient(var(--sky-hi1) 0 20%, var(--sky-hi2) 20% 40%, var(--sky-hi3) 40% 60%,
