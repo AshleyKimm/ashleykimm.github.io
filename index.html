@@ -49,9 +49,14 @@
             <!-- Ashley walks in, says hi in the bubble, then walks with the arrow keys or A / D (see common.js) -->
             <div class="walker" id="walker">
                 <img src="images/avatar-full_body.png" alt="Pixel-art Ashley" width="250" height="250" draggable="false">
+                <!-- Flashes above her head once she's said hi; clicking it (or her) tells more about me -->
+                <button class="click-me" id="click-me" type="button" aria-label="Tell me more about Ashley" hidden>click!</button>
             </div>
             <div class="bubble" id="bubble" hidden>
                 <h1 class="bubble-text" aria-label="Hi, I'm Ashley!"><span id="bubble-text" data-text="Hi, I'm Ashley!" aria-hidden="true"></span><span class="caret" aria-hidden="true"></span></h1>
+                <!-- More about me: typed out below the greeting after a click. Edit the text in data-text (&#10; = new line). -->
+                <p class="bubble-more" id="bubble-more" aria-live="polite" hidden><span id="bubble-more-text" aria-hidden="true"
+                    data-text="I'm a Computer Engineering student at the University of Waterloo!&#10;I like building things that are reliable and actually get used. Lately I've been experimenting with AI agents, using them to turn my ideas into real projects! Stay tuned!"></span><span class="caret" aria-hidden="true"></span></p>
                 <p class="bubble-hint">Use the arrow keys or A / D to walk around</p>
             </div>
             <div class="ground" aria-hidden="true"></div>

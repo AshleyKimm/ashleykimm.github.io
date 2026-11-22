@@ -166,7 +166,23 @@ h1, h2, h3 { font-weight: normal; margin: 0; line-height: 1.1; }
     display: inline-block; width: 4px; height: 32px; margin-left: 4px; vertical-align: -4px;
     background: var(--ink); animation: blink 1s steps(1) infinite;
 }
-.bubble.done .caret { display: none; }
+.bubble.done .bubble-text .caret { display: none; }
+/* More about me: typed below the greeting after a click; the bubble gets wider and wraps */
+.bubble.expanded { white-space: normal; width: min(460px, calc(100vw - 32px)); }
+.bubble-more { margin: 10px 0 0; line-height: 1.35; white-space: pre-line; }
+.bubble-more[hidden] { display: none; }
+.bubble-more .caret { display: none; height: 18px; vertical-align: -3px; }
+.bubble.typing-more .bubble-more .caret { display: inline-block; }
+/* "Click!" flashing over her head */
+.click-me {
+    position: absolute; left: 50%; top: -22px; transform: translateX(-50%);
+    padding: 2px 8px; border: 0; background: none; cursor: pointer; pointer-events: auto;
+    font: 30px Munro, monospace; color: #fff; white-space: nowrap;
+    text-shadow: 2px 2px 0 var(--outline), -2px -2px 0 var(--outline), 2px -2px 0 var(--outline), -2px 2px 0 var(--outline);
+    animation: click-flash .9s steps(1) infinite;
+}
+.click-me[hidden] { display: none; }
+@keyframes click-flash { 50% { opacity: 0; } }
 .bubble-hint { margin: 4px 0 0; font-size: 20px; color: var(--muted); visibility: hidden; }
 .bubble.show-hint .bubble-hint { visibility: visible; }
 @media (hover: none) { .bubble-hint { display: none; } }   /* phones have no arrow keys */
@@ -179,6 +195,7 @@ h1, h2, h3 { font-weight: normal; margin: 0; line-height: 1.1; }
 .bubble.above { bottom: 322px; }
 .bubble.above .tail { left: calc(50% - 16px); right: auto; bottom: -22px; transform: rotate(-90deg); }
 @media (max-width: 560px) {
+    .click-me { font-size: 20px; top: -14px; }
     .bubble { bottom: 209px; padding: 10px 16px 12px; }
     .bubble.above { bottom: 281px; }
     .bubble-text { font-size: 30px; }

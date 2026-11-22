@@ -471,6 +471,8 @@ function goTo(page) {
     if (!el || !bubble) return;
     const img = el.querySelector("img");
     const typed = $("bubble-text");
+    const clickMe = $("click-me"), more = $("bubble-more"), moreText = $("bubble-more-text");
+    const scene = document.querySelector(".home-scene");
     const FRAMES = {
         front: "images/avatar-full_body.png",
         left: ["images/walk-left-1.png", "images/stand-left_1.png", "images/walk-left-2.png", "images/stand-left_1.png"],
@@ -515,17 +517,41 @@ function goTo(page) {
         bubble.style.left = Math.round(Math.min(vw - 8 - bw, Math.max(8, pos))) + "px";
     }
 
+    // Types `text` into `target` one letter at a time, pausing a little after commas and sentences
+    function typeOut(target, text, perLetter, done) {
+        let i = 0;
+        const next = () => {
+            target.textContent = text.slice(0, i);
+            if (i >= text.length) { done(); return; }
+            const c = text[i - 1] || "", after = text[i] || "";
+            i++;
+            const pause = c === "," ? perLetter * 3.5 : /[.!?]/.test(c) && /\s/.test(after) ? perLetter * 7 : perLetter;
+            setTimeout(next, pause);
+        };
+        next();
+    }
+
     function say(text, done) {
         bubble.hidden = false;
         bubble.classList.add("pop");
-        let i = 0;
-        const next = () => {
-            typed.textContent = text.slice(0, i);
-            if (i++ < text.length) setTimeout(next, text[i - 2] === "," ? 260 : 75);  // small pause after a comma
-            else done();
-        };
-        setTimeout(next, 250);
+        setTimeout(() => typeOut(typed, text, 75, done), 250);
     }
+
+    // After she's said hi, "Click!" flashes over her head. Clicking it (or her) keeps the greeting
+    // and types more about me underneath it, in a wider bubble.
+    let told = false;
+    function tellMore() {
+        if (told || mode !== "player") return;
+        told = true;
+        clickMe.hidden = true;
+        more.hidden = false;
+        bubble.classList.add("expanded");
+        const text = moreText.dataset.text;
+        if (REDUCE_MOTION) { moreText.textContent = text; return; }
+        bubble.classList.add("typing-more");
+        typeOut(moreText, text, 28, () => bubble.classList.remove("typing-more"));
+    }
+    clickMe.addEventListener("click", e => { e.stopPropagation(); tellMore(); });
 
     function startIntro() {
         if (mode !== "waiting") return;
@@ -534,7 +560,7 @@ function goTo(page) {
         if (REDUCE_MOTION) {          // no walking or typing: just be there, saying hi
             bubble.hidden = false; typed.textContent = greeting;
             x = restingSpot();
-            bubble.classList.add("done", "show-hint"); mode = "player"; return;
+            bubble.classList.add("done", "show-hint"); mode = "player"; clickMe.hidden = false; return;
         }
         // Measure the bubble with the full text so she stops in the right place
         typed.textContent = greeting; bubble.hidden = false;
@@ -544,7 +570,7 @@ function goTo(page) {
             autoTarget = target;
             onArrive = () => say(greeting, () => {
                 bubble.classList.add("done");
-                setTimeout(() => bubble.classList.add("show-hint"), 400);
+                setTimeout(() => { bubble.classList.add("show-hint"); if (!told) clickMe.hidden = false; }, 400);
                 mode = "player";      // now the keys work
             });
         }, 400);
@@ -566,12 +592,14 @@ function goTo(page) {
     let mouse = null;
     addEventListener("pointermove", e => { mouse = e.pointerType === "mouse" ? { x: e.clientX, y: e.clientY } : null; }, { passive: true });
     document.addEventListener("pointerleave", () => { mouse = null; });
-    const overAvatar = () => {
-        if (!mouse) return false;
+    const onAvatar = (px, py) => {      // the figure fills roughly the middle of the image
         const r = el.getBoundingClientRect();
-        return mouse.x > r.left + r.width * .24 && mouse.x < r.right - r.width * .22 &&
-               mouse.y > r.top + r.height * .12 && mouse.y < r.bottom - r.height * .06;
+        return px > r.left + r.width * .24 && px < r.right - r.width * .22 &&
+               py > r.top + r.height * .12 && py < r.bottom - r.height * .06;
     };
+    const overAvatar = () => !!mouse && onAvatar(mouse.x, mouse.y);
+    // Clicking (or tapping) her also tells more, once she's said hi
+    scene.addEventListener("click", e => { if (onAvatar(e.clientX, e.clientY)) tellMore(); });
 
     let walking = null, frame = 0, frameAt = 0, last = 0;
     function tick(t) {
@@ -598,7 +626,9 @@ function goTo(page) {
         x = Math.min(range(), Math.max(0, x));
         el.style.transform = `translateX(${Math.round(x)}px)`;
         placeBubble();
-        el.classList.toggle("hop", overAvatar());
+        const hovering = overAvatar();
+        el.classList.toggle("hop", hovering);
+        scene.style.cursor = hovering && mode === "player" && !told ? "pointer" : "";  // she's clickable
         requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
