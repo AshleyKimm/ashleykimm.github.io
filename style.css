@@ -410,6 +410,7 @@ section h2 {
     background: #c79a5e; box-shadow: inset 4px 4px 0 #a8773e, inset -4px -4px 0 #ddb377;
     text-decoration: none; color: var(--ink);
 }
+.slot.empty { padding: 0; }   /* not the padded ".empty" message box used on the Projects page */
 a.slot:hover { background: #d8ad6f; }
 .slot .px { transition: transform .12s steps(2); }
 a.slot:hover .px, a.slot:focus-visible .px { transform: translateY(-3px); }
