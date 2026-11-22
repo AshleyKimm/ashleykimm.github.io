@@ -7,6 +7,8 @@
 
 /* ---------- Palette (day) ---------- */
 :root {
+    /* Pebbled dirt: the page background below the grass, and the home page's ground */
+    --dirt: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%2388552e'/%3E%3Cg fill='%23a87445'%3E%3Crect x='3' y='3' width='2' height='1'/%3E%3Crect x='11' y='7' width='1' height='1'/%3E%3Crect x='6' y='12' width='2' height='1'/%3E%3Crect x='13' y='14' width='1' height='1'/%3E%3C/g%3E%3Cg fill='%236b4423'%3E%3Crect x='8' y='1' width='1' height='1'/%3E%3Crect x='1' y='9' width='1' height='1'/%3E%3Crect x='14' y='4' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
     --sky1: #6ec6f0; --sky2: #84d0f3; --sky3: #9bdaf6; --sky4: #b5e5f9;
     --sky-hi1: #3f9fdc; --sky-hi2: #4fb0e6; --sky-hi3: #5ebbeb;
     --paper: #fbe8bb; --paper-light: #fff5d6; --paper-shade: #e6c587;
@@ -37,7 +39,7 @@ body {
     background-color: #88552e;
     background-image:
         linear-gradient(var(--tint), var(--tint)),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%2388552e'/%3E%3Cg fill='%23a87445'%3E%3Crect x='3' y='3' width='2' height='1'/%3E%3Crect x='11' y='7' width='1' height='1'/%3E%3Crect x='6' y='12' width='2' height='1'/%3E%3Crect x='13' y='14' width='1' height='1'/%3E%3C/g%3E%3Cg fill='%236b4423'%3E%3Crect x='8' y='1' width='1' height='1'/%3E%3Crect x='1' y='9' width='1' height='1'/%3E%3Crect x='14' y='4' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+        var(--dirt);
     background-size: auto, 48px 48px;
     image-rendering: pixelated;
 }
@@ -193,10 +195,11 @@ h1, h2, h3 { font-weight: normal; margin: 0; line-height: 1.1; }
     position: relative; height: 48px;
     background-color: #88552e;
     background-image:
+        linear-gradient(var(--tint), var(--tint)),
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='16' shape-rendering='crispEdges'%3E%3Crect x='11' y='3' width='1' height='3' fill='%233f7f25'/%3E%3Cg fill='%23ff7eb6'%3E%3Crect x='10' y='1' width='1' height='1'/%3E%3Crect x='12' y='1' width='1' height='1'/%3E%3Crect x='11' y='0' width='1' height='1'/%3E%3Crect x='11' y='2' width='1' height='1'/%3E%3C/g%3E%3Crect x='11' y='1' width='1' height='1' fill='%23ffd23f'/%3E%3Crect x='31' y='3' width='1' height='3' fill='%233f7f25'/%3E%3Cg fill='%23ffffff'%3E%3Crect x='30' y='1' width='1' height='1'/%3E%3Crect x='32' y='1' width='1' height='1'/%3E%3Crect x='31' y='0' width='1' height='1'/%3E%3Crect x='31' y='2' width='1' height='1'/%3E%3C/g%3E%3Crect x='31' y='1' width='1' height='1' fill='%23ffd23f'/%3E%3C/svg%3E"),
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Crect y='6' width='16' height='10' fill='%2388552e'/%3E%3Cg fill='%234f9a33'%3E%3Crect y='4' width='16' height='4'/%3E%3Crect x='1' y='2' width='1' height='2'/%3E%3Crect x='5' y='1' width='1' height='3'/%3E%3Crect x='9' y='3' width='1' height='1'/%3E%3Crect x='13' y='2' width='1' height='2'/%3E%3C/g%3E%3Crect y='4' width='16' height='1' fill='%2376c043'/%3E%3Crect y='8' width='16' height='1' fill='%236b4423'/%3E%3Cg fill='%23a87445'%3E%3Crect x='3' y='11' width='2' height='1'/%3E%3Crect x='11' y='13' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
-    background-size: 120px 48px, 48px 48px;
-    background-repeat: repeat-x;
+    background-size: auto, 120px 48px, 48px 48px;
+    background-repeat: no-repeat, repeat-x, repeat-x;
     box-shadow: 0 4px 0 var(--outline);
 }
 
@@ -376,6 +379,10 @@ section h2 {
 .world.fast { transition-duration: .5s; }
 .world.instant { transition: none; }
 .home-scene .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 150px; }  /* room for the HUD */
+.home-scene .ground::after {
+    content: ""; position: absolute; left: 0; right: 0; top: 48px; bottom: 0;
+    background: linear-gradient(var(--tint), var(--tint)), var(--dirt) 0 0 / 48px 48px;
+}
 .home-scene .orb { top: calc(60% + 40px); }
 .home-scene .birds { top: 60%; }
 .shoot-zone { position: absolute; left: 0; right: 0; top: 60%; bottom: 0; }
@@ -435,13 +442,19 @@ body.rising > section { animation: rise-in .8s cubic-bezier(.2, .8, .3, 1) both;
 @keyframes rise-in { from { transform: translateY(40vh); opacity: 0; } }
 
 /* Cross-page View Transition (Chrome, Edge, Safari 18.2+): Home -> another page.
-   The old page slides up by --lift (its ground's distance from the top) while the new page, already
-   scrolled to its own ground, rises from --lift below. The two grass lines stay lined up the whole way,
-   so it looks like one strip of ground going up with the page underneath coming into view. */
+   The home ground rises to where the new page's grass sits (--lift = the difference). The old page slides
+   up by --lift while the new page rises from --lift below, so the two grass lines stay lined up the whole
+   way; the new page's sky and sign are revealed from the grass line up (--clip-top) as the old sky leaves. */
 @view-transition { navigation: auto; }
 .hud { view-transition-name: hud; }               /* the bottom bar and the day/night button stay still */
 .theme-float { view-transition-name: theme-button; }
+/* Plain layering (the browser's default blend would wash the two pages together) */
+html[data-vt="descend"]::view-transition-old(root),
+html[data-vt="descend"]::view-transition-new(root) { mix-blend-mode: normal; opacity: 1; }
 html[data-vt="descend"]::view-transition-old(root) { animation: vt-ground-up .9s cubic-bezier(.45, 0, .25, 1) both; }
 html[data-vt="descend"]::view-transition-new(root) { animation: vt-page-in .9s cubic-bezier(.45, 0, .25, 1) both; }
 @keyframes vt-ground-up { to { transform: translateY(calc(-1 * var(--lift, 0px))); } }
-@keyframes vt-page-in { from { transform: translateY(var(--lift, 0px)); } }
+@keyframes vt-page-in {
+    from { transform: translateY(var(--lift, 0px)); clip-path: inset(var(--clip-top, 0px) 0 0 0); }
+    to { transform: none; clip-path: inset(0 0 0 0); }
+}

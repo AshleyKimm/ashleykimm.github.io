@@ -309,10 +309,12 @@ function goTo(page) {
     const ground = scene && scene.querySelector(".ground");
     if (!scene || page === "home" || REDUCE_MOTION || !ground) { location.href = PAGES[page]; return; }
     if (scene.classList.contains("leaving")) return;
-    // How far the ground has to rise to reach the top of the screen
-    const lift = Math.max(0, Math.round(ground.getBoundingClientRect().top));
-    try { sessionStorage.setItem("enter", "down"); sessionStorage.setItem("lift", String(lift)); } catch (e) {}
+    // Where the ground is now; the next page lines its own ground up with this
+    const groundY = Math.round(ground.getBoundingClientRect().top);
+    try { sessionStorage.setItem("enter", "down"); sessionStorage.setItem("groundY", String(groundY)); } catch (e) {}
     if (PAGE_TRANSITIONS) { location.href = PAGES[page]; return; }
+    // Other browsers: slide up to about where the other pages' grass sits, then go
+    const lift = Math.max(0, groundY - 260);
     scene.classList.add("leaving");
     scene.style.transform = `translateY(${-lift}px)`;
     let gone = false;
@@ -354,27 +356,23 @@ function goTo(page) {
     });
 })();
 
-/* ---------- Arriving from Home: start with this page's ground at the top, panels rise in ---------- */
+/* ---------- Arriving from Home: the ground keeps rising until it reaches this page's grass ---------- */
 (() => {
-    let from = null, lift = 0;
+    let from = null, groundY = 0;
     try {
-        from = sessionStorage.getItem("enter"); lift = Number(sessionStorage.getItem("lift")) || 0;
-        sessionStorage.removeItem("enter"); sessionStorage.removeItem("lift");
+        from = sessionStorage.getItem("enter"); groundY = Number(sessionStorage.getItem("groundY")) || 0;
+        sessionStorage.removeItem("enter"); sessionStorage.removeItem("groundY");
     } catch (e) {}
     const ground = document.querySelector(".hero .ground");
     const arriving = from === "down" && ground && !document.querySelector(".home-scene");
-    if (arriving) {
-        const top = ground.getBoundingClientRect().top + scrollY;
-        document.body.style.minHeight = (top + innerHeight) + "px";  // room to scroll even before content loads
-        scrollTo({ top, behavior: "instant" });
-    }
     if (!("onpagereveal" in window)) { if (arriving) document.body.classList.add("rising"); return; }
     addEventListener("pagereveal", e => {
         if (!e.viewTransition) { if (arriving) document.body.classList.add("rising"); return; }
         if (!arriving) { e.viewTransition.skipTransition(); return; }  // only Home -> page slides; others switch normally
-        // Old page slides up by `lift` while this one rises from `lift` below: both grass lines stay lined up
+        const groundHere = Math.round(ground.getBoundingClientRect().top);
         root.dataset.vt = "descend";
-        root.style.setProperty("--lift", lift + "px");
+        root.style.setProperty("--lift", (groundY - groundHere) + "px");   // home grass line -> this page's grass line
+        root.style.setProperty("--clip-top", groundHere + "px");           // reveal this page's sky from the grass up
         e.viewTransition.finished.finally(() => { delete root.dataset.vt; });
     }, { once: true });
 })();
