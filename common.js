@@ -335,28 +335,36 @@ function jumpToPending() {
         addEventListener(ev, skip, { once: true, passive: true }));
 })();
 
-/* ---------- Home: the avatar strolls left and right along the ground ---------- */
-// Stands facing forward for a few seconds, walks to a random spot (alternating the two walking
-// frames for that direction), then faces forward again. Always stays inside the window.
+/* ---------- Home: walk the avatar with the arrow keys or A / D ---------- */
+// Hold Left/A or Right/D to walk; each step cycles walk 1 -> stand -> walk 2 -> stand.
+// Let go and it stops and faces forward. It always stays inside the window.
 (() => {
     const el = $("walker");
     if (!el) return;
     const img = el.querySelector("img");
-    const DIR = "images/avatar/";
     const FRAMES = {
-        front: [DIR + "front.png"],
-        left: [DIR + "walk-left-1.png", DIR + "walk-left-2.png"],
-        right: [DIR + "walk-right-1.png", DIR + "walk-right-2.png"]
+        front: "images/avatar-full_body.png",
+        left: ["images/walk-left-1.png", "images/stand-left_1.png", "images/walk-left-2.png", "images/stand-left_1.png"],
+        right: ["images/walk-right-1.png", "images/stand-right_1.png", "images/walk-right-2.png", "images/stand-right_1.png"]
     };
-    Object.values(FRAMES).flat().forEach(src => { new Image().src = src; });  // preload, so steps don't flicker
+    [FRAMES.front, ...FRAMES.left, ...FRAMES.right].forEach(src => { new Image().src = src; });  // preload: no flicker
 
-    const SPEED = 70;      // pixels per second
-    const STEP_MS = 220;   // how long each walking frame shows
+    const SPEED = 160;     // pixels per second while a key is held
+    const STEP_MS = 140;   // how long each frame of the walk cycle shows
     const show = src => { if (img.getAttribute("src") !== src) img.setAttribute("src", src); };
     const range = () => Math.max(0, el.parentElement.clientWidth - el.offsetWidth);  // keeps it in the window
 
-    let x = range() * 0.72;        // start to the right of the sign
-    let target = null, idleUntil = performance.now() + 2500, frame = 0, frameAt = 0, last = 0;
+    let x = range() * 0.72;  // start to the right of the sign
+    const held = { left: false, right: false };
+    const KEYS = { ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right" };
+    addEventListener("keydown", e => {
+        const dir = KEYS[e.code];
+        if (!dir || e.ctrlKey || e.metaKey || e.altKey || /^(input|textarea|select)$/i.test(e.target.tagName)) return;
+        held[dir] = true;
+        e.preventDefault();  // arrow keys walk instead of scrolling the page
+    });
+    addEventListener("keyup", e => { const dir = KEYS[e.code]; if (dir) held[dir] = false; });
+    addEventListener("blur", () => { held.left = held.right = false; });  // don't keep walking after switching windows
 
     // Hop while the mouse is over the avatar (it doesn't take clicks, so this checks the position)
     let mouse = null;
@@ -369,35 +377,22 @@ function jumpToPending() {
                mouse.y > r.top + r.height * .12 && mouse.y < r.bottom - r.height * .06;
     };
 
-    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let walking = null, frame = 0, frameAt = 0, last = 0;
     function tick(t) {
         const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
         last = t;
-        const max = range();
-        x = Math.min(max, Math.max(0, x));
-        if (target !== null) target = Math.min(max, Math.max(0, target));  // window got smaller
-
-        if (target === null) {
-            show(FRAMES.front[0]);
-            if (!still && t >= idleUntil && !document.hidden && max > 0) {
-                // Pick a new spot at least 100px away (if there's room)
-                let next;
-                do { next = Math.random() * max; } while (max > 200 && Math.abs(next - x) < 100);
-                target = next; frame = 0; frameAt = t;
-            }
+        // Both keys held (or neither): stand still
+        const dir = held.left === held.right ? null : (held.left ? "left" : "right");
+        if (dir) {
+            if (dir !== walking) { walking = dir; frame = 0; frameAt = t; }  // start a fresh step
+            else if (t - frameAt >= STEP_MS) { frame = (frame + 1) % 4; frameAt = t; }
+            x += (dir === "left" ? -1 : 1) * SPEED * dt;
+            show(FRAMES[dir][frame]);
         } else {
-            const left = target < x;
-            const step = SPEED * dt;
-            if (Math.abs(target - x) <= step) {
-                x = target; target = null;
-                idleUntil = t + 1500 + Math.random() * 3500;  // rest 1.5-5 seconds
-                show(FRAMES.front[0]);
-            } else {
-                x += left ? -step : step;
-                if (t - frameAt >= STEP_MS) { frame ^= 1; frameAt = t; }
-                show(FRAMES[left ? "left" : "right"][frame]);
-            }
+            walking = null;
+            show(FRAMES.front);
         }
+        x = Math.min(range(), Math.max(0, x));
         el.style.transform = `translateX(${Math.round(x)}px)`;
         el.classList.toggle("hop", overAvatar());
         requestAnimationFrame(tick);
