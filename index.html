@@ -45,25 +45,13 @@
             <div class="cloud c4" aria-hidden="true"></div>
             <div class="cloud c5" aria-hidden="true"></div>
             <div class="cloud c6" aria-hidden="true"></div>
-            <div class="wrap hero-inner">
-            <div class="scene">
-                <div class="sign-col">
-                    <div class="sign">
-                        <h1>Hi, I'm Ashley!</h1>
-                        <div class="btns">
-                            <span class="connect-label">Let's connect!</span>
-                            <a class="btn" href="https://github.com/AshleyKimm" target="_blank" rel="noopener">GitHub</a>
-                            <a class="btn" href="https://linkedin.com/in/ashkimm" target="_blank" rel="noopener">LinkedIn</a>
-                            <a class="btn" href="mailto:a238kim@uwaterloo.ca">Email</a>
-                        </div>
-                    </div>
-                    <div class="posts" aria-hidden="true"></div>
-                </div>
-            </div>
-            </div>
-            <!-- Ashley: walk with the arrow keys or A / D (see common.js) -->
+            <!-- Ashley walks in, says hi in the bubble, then walks with the arrow keys or A / D (see common.js) -->
             <div class="walker" id="walker">
                 <img src="images/avatar-full_body.png" alt="Pixel-art Ashley" width="250" height="250" draggable="false">
+            </div>
+            <div class="bubble" id="bubble" hidden>
+                <h1 class="bubble-text" aria-label="Hi, I'm Ashley!"><span id="bubble-text" data-text="Hi, I'm Ashley!" aria-hidden="true"></span><span class="caret" aria-hidden="true"></span></h1>
+                <p class="bubble-hint">Use the arrow keys or A / D to walk around</p>
             </div>
             <div class="ground" aria-hidden="true"></div>
         </div>

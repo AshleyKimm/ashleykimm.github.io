@@ -34,6 +34,16 @@ const ICONS = {
     fullscreen: px(["ccc.ccc", "c.....c", "c.....c", ".......", "c.....c", "c.....c", "ccc.ccc"], { c: "currentColor" }, 3),
     sun: px(["....y....", ".y.....y.", "...yyy...", "..yyyyy..", "y.yyyyy.y", "..yyyyy..", "...yyy...", ".y.....y.", "....y...."],
         { y: "#ffd23f" }, 3),
+    // "Let's connect!" slots
+    github: px(["....oooo....", "..oooooooo..", ".oowoooowoo.", ".oowwwwwwoo.", "oowwwwwwwwoo", "oowwwwwwwwoo", "oowwwwwwwwoo",
+                "ooowwwwwwooo", "owooowwooooo", ".owwowwoooo.", "..ooowwooo..", "....oooo...."],
+        { o: "#24292f", w: "#ffffff" }, 4),
+    linkedin: px([".bbbbbbbbbb.", "bbbbbbbbbbbb", "bbwwbbbbbbbb", "bbwwbbbbbbbb", "bbbbbbbbbbbb", "bbwwbwwwwbbb",
+                  "bbwwbwwbwwbb", "bbwwbwwbwwbb", "bbwwbwwbwwbb", "bbwwbwwbwwbb", "bbwwbwwbwwbb", ".bbbbbbbbbb."],
+        { b: "#0a66c2", w: "#ffffff" }, 4),
+    mail: px(["oooooooooooo", "oowwwwwwwwoo", "owowwwwwwowo", "owwowwwwowwo", "owwwowwowwwo", "owwwwoowwwwo",
+              "owwwwwwwwwwo", "owwwwwwwwwwo", "oooooooooooo"],
+        { o: "#4a2a12", w: "#fff5d6" }, 4),
     // Inventory slots
     house: px([".....oo.....", "....orro....", "...orrrro...", "..orrrrrro..", ".orrrrrrrro.", "oooooooooooo",
                ".owwwwwwwwo.", ".owbbwwddwo.", ".owbbwwddwo.", ".owwwwwddwo.", ".oooooooooo."],
@@ -274,50 +284,123 @@ function jumpToPending() {
     setTimeout(birds, 2000 + Math.random() * 3000);
 })();
 
-/* ---------- Inventory hotbar: the site's navigation, at the bottom of every page ---------- */
-(() => {
-    const SLOTS = [
-        { page: "home", label: "Home", icon: ICONS.house },
-        { page: "experience", label: "Experience", icon: ICONS.briefcase },
-        { page: "projects", label: "Projects", icon: ICONS.chestBig },
-        { page: "arcade", label: "Arcade", icon: ICONS.joystick }
-    ];
-    const EMPTY = 4;  // empty slots, just for the inventory look (hidden on phones)
-    const here = document.body.dataset.page;
-    const bar = document.createElement("div");
-    bar.className = "inventory";
-    bar.setAttribute("role", "navigation");
-    bar.setAttribute("aria-label", "Site");
-    bar.innerHTML = SLOTS.map((s, i) =>
-        `<a class="slot" href="${PAGES[s.page]}" data-label="${s.label}" aria-label="${s.label}"` +
-        `${s.page === here ? ' aria-current="page"' : ""}><span class="key" aria-hidden="true">${i + 1}</span>${s.icon}</a>`
-    ).join("") + '<span class="slot empty" aria-hidden="true"></span>'.repeat(EMPTY);
-    document.body.appendChild(bar);
+/* ---------- Bottom HUD: "Let's connect!" socials + the inventory hotbar (site navigation) ---------- */
+const REDUCE_MOTION = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SLOTS = [
+    { page: "home", label: "Home", icon: ICONS.house },
+    { page: "experience", label: "Experience", icon: ICONS.briefcase },
+    { page: "projects", label: "Projects", icon: ICONS.chestBig },
+    { page: "arcade", label: "Arcade", icon: ICONS.joystick }
+];
+const SOCIALS = [
+    { label: "GitHub", href: "https://github.com/AshleyKimm", icon: ICONS.github },
+    { label: "LinkedIn", href: "https://linkedin.com/in/ashkimm", icon: ICONS.linkedin },
+    { label: "Email", href: "mailto:a238kim@uwaterloo.ca", icon: ICONS.mail }
+];
 
+// Going from Home to another page: the camera keeps heading down. The home scene slides up until
+// only the ground is left at the top, then the next page opens with its own ground in that spot
+// and its panels rise into view.
+// Browsers with cross-page View Transitions (Chrome, Edge, Safari 18.2+) animate both pages together
+// with no gap in between (see style.css); other browsers get a slide-out here and a rise-in there.
+const PAGE_TRANSITIONS = typeof CSSViewTransitionRule !== "undefined" && location.protocol !== "file:";
+function goTo(page) {
+    const scene = document.querySelector(".home-scene");
+    const ground = scene && scene.querySelector(".ground");
+    if (!scene || page === "home" || REDUCE_MOTION || !ground) { location.href = PAGES[page]; return; }
+    if (scene.classList.contains("leaving")) return;
+    // How far the ground has to rise to reach the top of the screen
+    const lift = Math.max(0, Math.round(ground.getBoundingClientRect().top));
+    try { sessionStorage.setItem("enter", "down"); sessionStorage.setItem("lift", String(lift)); } catch (e) {}
+    if (PAGE_TRANSITIONS) { location.href = PAGES[page]; return; }
+    scene.classList.add("leaving");
+    scene.style.transform = `translateY(${-lift}px)`;
+    let gone = false;
+    const leave = () => { if (!gone) { gone = true; location.href = PAGES[page]; } };
+    scene.addEventListener("transitionend", e => { if (e.target === scene) leave(); });
+    setTimeout(leave, 1200);  // in case the transition event doesn't fire
+}
+
+(() => {
+    const here = document.body.dataset.page;
+    const hud = document.createElement("div");
+    hud.className = "hud";
+    // One inventory bar: [Home Experience Projects Arcade] [empty slot] [GitHub LinkedIn Email]
+    hud.innerHTML = `
+        <div class="bar">
+            <div class="group" role="navigation" aria-label="Site">${SLOTS.map((s, i) =>
+                `<a class="slot" href="${PAGES[s.page]}" data-nav="${s.page}" data-label="${s.label}" aria-label="${s.label}"` +
+                `${s.page === here ? ' aria-current="page"' : ""}><span class="key" aria-hidden="true">${i + 1}</span>${s.icon}</a>`).join("")}
+            </div>
+            <span class="slot empty divider" aria-hidden="true"></span>
+            <div class="group connect">
+                <p class="connect-title">Let's connect!</p>${SOCIALS.map(s =>
+                `<a class="slot" href="${s.href}"${s.href.startsWith("http") ? ' target="_blank" rel="noopener"' : ""} data-label="${s.label}" aria-label="${s.label}">${s.icon}</a>`).join("")}
+            </div>
+        </div>`;
+    document.body.appendChild(hud);
+
+    hud.addEventListener("click", e => {
+        const a = e.target.closest("a[data-nav]");
+        if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+        e.preventDefault();
+        if (a.dataset.nav !== here) goTo(a.dataset.nav);
+    });
     // Number keys 1-4 jump to a slot, like a game hotbar
     addEventListener("keydown", e => {
         if (e.ctrlKey || e.metaKey || e.altKey || e.target.isContentEditable || /^(input|textarea|select)$/i.test(e.target.tagName)) return;
         const slot = SLOTS[Number(e.key) - 1];
-        if (slot && slot.page !== here) location.href = PAGES[slot.page];
+        if (slot && slot.page !== here) goTo(slot.page);
     });
+})();
+
+/* ---------- Arriving from Home: start with this page's ground at the top, panels rise in ---------- */
+(() => {
+    let from = null, lift = 0;
+    try {
+        from = sessionStorage.getItem("enter"); lift = Number(sessionStorage.getItem("lift")) || 0;
+        sessionStorage.removeItem("enter"); sessionStorage.removeItem("lift");
+    } catch (e) {}
+    const ground = document.querySelector(".hero .ground");
+    const arriving = from === "down" && ground && !document.querySelector(".home-scene");
+    if (arriving) {
+        const top = ground.getBoundingClientRect().top + scrollY;
+        document.body.style.minHeight = (top + innerHeight) + "px";  // room to scroll even before content loads
+        scrollTo({ top, behavior: "instant" });
+    }
+    if (!("onpagereveal" in window)) { if (arriving) document.body.classList.add("rising"); return; }
+    addEventListener("pagereveal", e => {
+        if (!e.viewTransition) { if (arriving) document.body.classList.add("rising"); return; }
+        if (!arriving) { e.viewTransition.skipTransition(); return; }  // only Home -> page slides; others switch normally
+        // Old page slides up by `lift` while this one rises from `lift` below: both grass lines stay lined up
+        root.dataset.vt = "descend";
+        root.style.setProperty("--lift", lift + "px");
+        e.viewTransition.finished.finally(() => { delete root.dataset.vt; });
+    }, { once: true });
 })();
 
 /* ---------- Home intro: start high in the sky, then slowly pan down to the ground ---------- */
 (() => {
     const world = $("world");
     if (!world) return;
+    // Lets Ashley know the ground is in view (see below)
+    const landedNow = () => {
+        if (world.dataset.landed) return;
+        world.dataset.landed = "1";
+        document.dispatchEvent(new Event("scene-landed"));
+    };
     let navType = "navigate", fromSite = false;
     try { navType = performance.getEntriesByType("navigation")[0].type; } catch (e) {}
     try { fromSite = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch (e) {}
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Plays on a fresh visit or a reload; skipped when moving between this site's pages
-    if (reduce || navType === "back_forward" || (fromSite && navType !== "reload")) {
+    if (REDUCE_MOTION || navType === "back_forward" || (fromSite && navType !== "reload")) {
         world.classList.add("instant", "landed");
+        landedNow();
         return;
     }
     let done = false;
-    world.addEventListener("transitionend", () => { done = true; });
-    const land = () => world.classList.add("landed");
+    world.addEventListener("transitionend", e => { if (e.target === world) { done = true; landedNow(); } });
+    setTimeout(landedNow, 6000);  // in case the transition event doesn't fire
     const skip = () => {
         if (done) return;
         // Jump from wherever the camera is to the ground, quickly
@@ -329,19 +412,21 @@ function jumpToPending() {
         world.classList.add("fast", "landed");
         world.style.transform = "";
     };
-    setTimeout(land, 700);  // a moment in the sky first
+    setTimeout(() => world.classList.add("landed"), 700);  // a moment in the sky first
     // Any click, scroll, key or touch skips ahead
     ["pointerdown", "wheel", "keydown", "touchstart"].forEach(ev =>
         addEventListener(ev, skip, { once: true, passive: true }));
 })();
 
-/* ---------- Home: walk the avatar with the arrow keys or A / D ---------- */
-// Hold Left/A or Right/D to walk; each step cycles walk 1 -> stand -> walk 2 -> stand.
-// Let go and it stops and faces forward. It always stays inside the window.
+/* ---------- Home: Ashley walks in, says hi, then walks with the arrow keys or A / D ---------- */
+// Once the ground is in view she walks from the center a little to the left, a speech bubble
+// pops up beside her and "Hi, I'm Ashley!" types out. After that the keys move her.
+// Each step cycles walk 1 -> stand -> walk 2 -> stand; when stopped she faces forward.
 (() => {
-    const el = $("walker");
-    if (!el) return;
+    const el = $("walker"), bubble = $("bubble");
+    if (!el || !bubble) return;
     const img = el.querySelector("img");
+    const typed = $("bubble-text");
     const FRAMES = {
         front: "images/avatar-full_body.png",
         left: ["images/walk-left-1.png", "images/stand-left_1.png", "images/walk-left-2.png", "images/stand-left_1.png"],
@@ -349,30 +434,97 @@ function jumpToPending() {
     };
     [FRAMES.front, ...FRAMES.left, ...FRAMES.right].forEach(src => { new Image().src = src; });  // preload: no flicker
 
-    const SPEED = 160;     // pixels per second while a key is held
-    const STEP_MS = 140;   // how long each frame of the walk cycle shows
-    const show = src => { if (img.getAttribute("src") !== src) img.setAttribute("src", src); };
-    const range = () => Math.max(0, el.parentElement.clientWidth - el.offsetWidth);  // keeps it in the window
+    // The bubble's tail: a little pixel wedge pointing at her (o = outline, p = bubble paper)
+    const TAIL = ["......oo", "....oopp", "..oopppp", "oopppppp", "..oooooo"];
+    let rects = "";
+    TAIL.forEach((row, y) => [...row].forEach((c, x) => { if (c !== ".") rects += `<rect class="${c}" x="${x}" y="${y}" width="1" height="1"/>`; }));
+    bubble.insertAdjacentHTML("afterbegin", `<svg class="tail" viewBox="0 0 8 5" width="32" height="20" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`);
 
-    let x = range() * 0.72;  // start to the right of the sign
+    const SPEED = 160, STEP_MS = 140;  // walking: pixels per second, and time per frame
+    const show = src => { if (img.getAttribute("src") !== src) img.setAttribute("src", src); };
+    const width = () => el.parentElement.clientWidth;
+    const range = () => Math.max(0, width() - el.offsetWidth);  // keeps her in the window
+
+    let x = range() / 2;              // starts in the center
+    let mode = "waiting";             // waiting -> intro (walking in, talking) -> player (keys move her)
+    let autoTarget = null, onArrive = null;
     const held = { left: false, right: false };
+
+    // Where she stops: she and the bubble centered together. On narrow screens (no room beside her,
+    // so the bubble goes above her head) she just walks a little to the left.
+    const W = () => el.offsetWidth;
+    const besideOffset = () => W() * 0.8 + 28;   // her right edge + the tail
+    const fitsBeside = () => besideOffset() + bubble.offsetWidth + 16 <= width();
+    const restingSpot = () => fitsBeside()
+        ? Math.min(range(), Math.max(0, (width() - (besideOffset() + bubble.offsetWidth)) / 2 - W() * 0.2))
+        : range() * 0.35;
+
+    function placeBubble() {
+        if (bubble.hidden) return;
+        const bw = bubble.offsetWidth, vw = width();
+        const right = x + besideOffset(), left = x + W() * 0.2 - 28 - bw;
+        // Beside her on the right; if there's no room, on her left; if neither fits, above her head
+        const side = right + bw <= vw - 8 ? "right" : left >= 8 ? "left" : "above";
+        bubble.classList.toggle("flip", side === "left");
+        bubble.classList.toggle("above", side === "above");
+        const pos = side === "right" ? right : side === "left" ? left : x + W() / 2 - bw / 2;
+        bubble.style.left = Math.round(Math.min(vw - 8 - bw, Math.max(8, pos))) + "px";
+    }
+
+    function say(text, done) {
+        bubble.hidden = false;
+        bubble.classList.add("pop");
+        let i = 0;
+        const next = () => {
+            typed.textContent = text.slice(0, i);
+            if (i++ < text.length) setTimeout(next, text[i - 2] === "," ? 260 : 75);  // small pause after a comma
+            else done();
+        };
+        setTimeout(next, 250);
+    }
+
+    function startIntro() {
+        if (mode !== "waiting") return;
+        mode = "intro";
+        const greeting = typed.dataset.text;
+        if (REDUCE_MOTION) {          // no walking or typing: just be there, saying hi
+            bubble.hidden = false; typed.textContent = greeting;
+            x = restingSpot();
+            bubble.classList.add("done", "show-hint"); mode = "player"; return;
+        }
+        // Measure the bubble with the full text so she stops in the right place
+        typed.textContent = greeting; bubble.hidden = false;
+        const target = restingSpot();
+        typed.textContent = ""; bubble.hidden = true;
+        setTimeout(() => {
+            autoTarget = target;
+            onArrive = () => say(greeting, () => {
+                bubble.classList.add("done");
+                setTimeout(() => bubble.classList.add("show-hint"), 400);
+                mode = "player";      // now the keys work
+            });
+        }, 400);
+    }
+    if ($("world").dataset.landed) startIntro();
+    else document.addEventListener("scene-landed", startIntro, { once: true });
+
     const KEYS = { ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right" };
     addEventListener("keydown", e => {
         const dir = KEYS[e.code];
         if (!dir || e.ctrlKey || e.metaKey || e.altKey || /^(input|textarea|select)$/i.test(e.target.tagName)) return;
-        held[dir] = true;
-        e.preventDefault();  // arrow keys walk instead of scrolling the page
+        e.preventDefault();               // arrow keys walk instead of scrolling the page
+        if (mode === "player") held[dir] = true;
     });
     addEventListener("keyup", e => { const dir = KEYS[e.code]; if (dir) held[dir] = false; });
-    addEventListener("blur", () => { held.left = held.right = false; });  // don't keep walking after switching windows
+    addEventListener("blur", () => { held.left = held.right = false; });
 
-    // Hop while the mouse is over the avatar (it doesn't take clicks, so this checks the position)
+    // Hop while the mouse is over her (she doesn't take clicks, so this checks the position)
     let mouse = null;
     addEventListener("pointermove", e => { mouse = e.pointerType === "mouse" ? { x: e.clientX, y: e.clientY } : null; }, { passive: true });
     document.addEventListener("pointerleave", () => { mouse = null; });
     const overAvatar = () => {
         if (!mouse) return false;
-        const r = el.getBoundingClientRect();  // the figure fills roughly the middle of the image
+        const r = el.getBoundingClientRect();
         return mouse.x > r.left + r.width * .24 && mouse.x < r.right - r.width * .22 &&
                mouse.y > r.top + r.height * .12 && mouse.y < r.bottom - r.height * .06;
     };
@@ -381,10 +533,17 @@ function jumpToPending() {
     function tick(t) {
         const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
         last = t;
-        // Both keys held (or neither): stand still
-        const dir = held.left === held.right ? null : (held.left ? "left" : "right");
+        let dir = null;
+        if (autoTarget !== null) {
+            if (Math.abs(autoTarget - x) <= Math.max(1, SPEED * dt)) {
+                x = autoTarget; autoTarget = null;
+                const cb = onArrive; onArrive = null; if (cb) cb();
+            } else dir = autoTarget < x ? "left" : "right";
+        } else if (mode === "player" && held.left !== held.right) {
+            dir = held.left ? "left" : "right";
+        }
         if (dir) {
-            if (dir !== walking) { walking = dir; frame = 0; frameAt = t; }  // start a fresh step
+            if (dir !== walking) { walking = dir; frame = 0; frameAt = t; }   // start a fresh step
             else if (t - frameAt >= STEP_MS) { frame = (frame + 1) % 4; frameAt = t; }
             x += (dir === "left" ? -1 : 1) * SPEED * dt;
             show(FRAMES[dir][frame]);
@@ -394,6 +553,7 @@ function jumpToPending() {
         }
         x = Math.min(range(), Math.max(0, x));
         el.style.transform = `translateX(${Math.round(x)}px)`;
+        placeBubble();
         el.classList.toggle("hop", overAvatar());
         requestAnimationFrame(tick);
     }

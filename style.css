@@ -33,11 +33,12 @@ body {
     margin: 0; color: var(--ink);
     font: 20px/1.35 Munro, monospace;
     -webkit-font-smoothing: none; font-smooth: never;
-    background-color: #a0622d;
+    /* Underground: the same dirt as the home page's ground, so every page continues below the grass */
+    background-color: #88552e;
     background-image:
         linear-gradient(var(--tint), var(--tint)),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='16' shape-rendering='crispEdges'%3E%3Crect width='32' height='16' fill='%23a0622d'/%3E%3Cg fill='%23704217'%3E%3Crect y='7' width='32' height='1'/%3E%3Crect y='15' width='32' height='1'/%3E%3Crect x='12' width='1' height='7'/%3E%3Crect x='26' y='8' width='1' height='7'/%3E%3C/g%3E%3Cg fill='%23b47438'%3E%3Crect x='3' y='2' width='5' height='1'/%3E%3Crect x='18' y='10' width='4' height='1'/%3E%3C/g%3E%3Cg fill='%238f5626'%3E%3Crect x='17' y='4' width='6' height='1'/%3E%3Crect x='5' y='11' width='7' height='1'/%3E%3C/g%3E%3C/svg%3E");
-    background-size: auto, 128px 64px;
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%2388552e'/%3E%3Cg fill='%23a87445'%3E%3Crect x='3' y='3' width='2' height='1'/%3E%3Crect x='11' y='7' width='1' height='1'/%3E%3Crect x='6' y='12' width='2' height='1'/%3E%3Crect x='13' y='14' width='1' height='1'/%3E%3C/g%3E%3Cg fill='%236b4423'%3E%3Crect x='8' y='1' width='1' height='1'/%3E%3Crect x='1' y='9' width='1' height='1'/%3E%3Crect x='14' y='4' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: auto, 48px 48px;
     image-rendering: pixelated;
 }
 a { color: inherit; }
@@ -130,15 +131,7 @@ h1, h2, h3 { font-weight: normal; margin: 0; line-height: 1.1; }
 }
 .sign .eyebrow { color: #ffe9a8; }
 .sign h1 { font-size: 60px; margin: 8px 0 20px; text-shadow: 4px 4px 0 var(--outline); }
-.sign .btns { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; text-shadow: none; }
-.connect-label { margin-right: 8px; color: #ffe9a8; text-shadow: 2px 2px 0 var(--outline); }
-@media (max-width: 520px) {
-    .sign h1 { font-size: 40px; }
-    /* "Let's connect" on its own row, GitHub / LinkedIn / Email side by side under it */
-    .sign .btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
-    .sign .btns .btn { justify-content: center; padding-left: 4px; padding-right: 4px; min-width: 0; }
-    .sign .btns .connect-label { grid-column: 1 / -1; margin: 0 0 4px; text-align: center; }
-}
+@media (max-width: 520px) { .sign h1 { font-size: 40px; } }
 .scene { position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: center; gap: 16px; width: 100%; }
 .sign-col { display: flex; flex-direction: column; align-items: center; width: min(100%, 640px); }
 .posts { position: relative; width: 100%; height: 48px; }
@@ -147,17 +140,48 @@ h1, h2, h3 { font-weight: normal; margin: 0; line-height: 1.1; }
 /* The art is drawn in 5px blocks at 250px; 200px (desktop) and 150px (phones) keep every block whole.
    It never blocks clicks; common.js makes it hop while the mouse is over it. */
 .walker {
-    position: absolute; left: 0; bottom: 92px; z-index: 2; width: 200px; height: 200px;
+    position: absolute; left: 0; bottom: 122px; z-index: 2; width: 200px; height: 200px;
     pointer-events: none; will-change: transform;
 }
 .walker img { display: block; width: 100%; height: 100%; image-rendering: pixelated; user-select: none; }
 .walker.hop img { animation: hop .5s steps(4) infinite; }
 @keyframes hop { 50% { transform: translateY(-16px); } }
-/* Taller posts on the home sign, so the avatar walks underneath it and never covers the buttons */
-.home-scene .posts { height: 210px; }
+@media (max-width: 560px) { .walker { width: 150px; height: 150px; bottom: 125px; } }
+
+/* ---------- Home: the speech bubble (common.js places it beside Ashley and types the text) ---------- */
+.bubble {
+    position: absolute; left: 0; bottom: 242px; z-index: 3;
+    padding: 12px 22px 16px; white-space: nowrap;
+    color: var(--ink); background: var(--paper-light);
+    box-shadow: inset 0 -4px 0 var(--paper-shade), var(--notch);
+}
+.bubble[hidden] { display: none; }
+.bubble.pop { animation: bubble-pop .24s steps(3); transform-origin: 0 100%; }
+.bubble.flip.pop { transform-origin: 100% 100%; }
+@keyframes bubble-pop { from { transform: scale(.3); opacity: 0; } }
+.bubble-text { margin: 0; font-size: 40px; line-height: 1.1; }
+.caret {
+    display: inline-block; width: 4px; height: 32px; margin-left: 4px; vertical-align: -4px;
+    background: var(--ink); animation: blink 1s steps(1) infinite;
+}
+.bubble.done .caret { display: none; }
+.bubble-hint { margin: 4px 0 0; font-size: 20px; color: var(--muted); visibility: hidden; }
+.bubble.show-hint .bubble-hint { visibility: visible; }
+@media (hover: none) { .bubble-hint { display: none; } }   /* phones have no arrow keys */
+/* The tail points at Ashley; it flips with the bubble when she's near the right edge */
+.tail { position: absolute; left: -28px; bottom: 14px; }
+.bubble.flip .tail { left: auto; right: -28px; transform: scaleX(-1); }
+.tail .o { fill: var(--outline); }
+.tail .p { fill: var(--paper-light); }
+/* Narrow screens: no room beside her, so the bubble sits above her head with the tail pointing down */
+.bubble.above { bottom: 322px; }
+.bubble.above .tail { left: calc(50% - 16px); right: auto; bottom: -22px; transform: rotate(-90deg); }
 @media (max-width: 560px) {
-    .walker { width: 150px; height: 150px; bottom: 95px; }
-    .home-scene .posts { height: 160px; }
+    .bubble { bottom: 209px; padding: 10px 16px 12px; }
+    .bubble.above { bottom: 281px; }
+    .bubble-text { font-size: 30px; }
+    .caret { height: 24px; }
+    .bubble-hint { display: none; }
 }
 .posts::before, .posts::after {
     content: ""; position: absolute; top: 4px; bottom: 0; width: 16px;
@@ -351,8 +375,7 @@ section h2 {
 .world.landed { transform: translateY(-60%); }   /* the bottom 40% = one screen: the ground scene */
 .world.fast { transition-duration: .5s; }
 .world.instant { transition: none; }
-.home-scene .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; }
-.home-scene .hero-inner { position: absolute; left: 0; right: 0; bottom: 120px; padding-top: 0; }
+.home-scene .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 150px; }  /* room for the HUD */
 .home-scene .orb { top: calc(60% + 40px); }
 .home-scene .birds { top: 60%; }
 .shoot-zone { position: absolute; left: 0; right: 0; top: 60%; bottom: 0; }
@@ -364,10 +387,16 @@ section h2 {
 .cloud.c5 { top: 24%; animation-duration: 75s; animation-delay: -50s; }
 .cloud.c6 { top: 38%; width: 144px; height: 60px; animation-duration: 105s; animation-delay: -80s; }
 
-/* ---------- Inventory hotbar: the site's navigation, on every page ---------- */
-.inventory {
-    position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 30;
-    display: flex; gap: 4px; padding: 6px; background: #7d4620; box-shadow: var(--notch);
+/* ---------- Bottom HUD: "Let's connect!" socials + the inventory hotbar, on every page ---------- */
+.hud { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 30; }
+.bar { display: flex; gap: 4px; padding: 6px; background: #7d4620; box-shadow: var(--notch); }
+.group { display: flex; gap: 4px; }
+.connect { position: relative; }
+/* "Let's connect!" sits just above the three social slots */
+.connect-title {
+    position: absolute; left: 50%; bottom: calc(100% + 12px); transform: translateX(-50%);
+    margin: 0; white-space: nowrap; color: #ffe9a8;
+    text-shadow: 2px 2px 0 var(--outline), -2px -2px 0 var(--outline), 2px -2px 0 var(--outline), -2px 2px 0 var(--outline);
 }
 .slot {
     position: relative; width: 64px; height: 64px; display: grid; place-items: center;
@@ -383,11 +412,36 @@ a.slot:hover .px, a.slot:focus-visible .px { transform: translateY(-3px); }
 a.slot::after {
     content: attr(data-label); position: absolute; left: 50%; bottom: calc(100% + 14px); transform: translateX(-50%);
     padding: 2px 10px 6px; white-space: nowrap; font-size: 20px; color: var(--ink);
-    background: var(--paper-light); box-shadow: var(--notch);
+    background: var(--paper-light); box-shadow: var(--notch); z-index: 1;
     visibility: hidden; pointer-events: none;
 }
 a.slot:hover::after, a.slot:focus-visible::after { visibility: visible; }
+@media (max-width: 900px) { .slot.empty:not(.divider) { display: none; } }   /* keep the divider slot */
 @media (max-width: 560px) {
-    .slot.empty { display: none; }
-    .slot { width: 56px; height: 56px; }
+    .hud { bottom: 8px; }
+    .bar, .group { gap: 2px; }
+    .bar { padding: 4px; }
+    .slot { width: 40px; height: 40px; }
+    .slot svg.px { width: 28px; height: auto; }
+    .slot .key { display: none; }
+    .connect-title { bottom: calc(100% + 8px); }
 }
+
+/* ---------- Home -> other pages: the camera keeps going down ---------- */
+/* The home scene slides up until only the ground is left at the top (common.js sets how far)... */
+.home-scene.leaving { transition: transform .9s cubic-bezier(.55, 0, .7, .2); }
+/* ...then the next page opens at its own ground, and its panels rise into view */
+body.rising > section { animation: rise-in .8s cubic-bezier(.2, .8, .3, 1) both; }
+@keyframes rise-in { from { transform: translateY(40vh); opacity: 0; } }
+
+/* Cross-page View Transition (Chrome, Edge, Safari 18.2+): Home -> another page.
+   The old page slides up by --lift (its ground's distance from the top) while the new page, already
+   scrolled to its own ground, rises from --lift below. The two grass lines stay lined up the whole way,
+   so it looks like one strip of ground going up with the page underneath coming into view. */
+@view-transition { navigation: auto; }
+.hud { view-transition-name: hud; }               /* the bottom bar and the day/night button stay still */
+.theme-float { view-transition-name: theme-button; }
+html[data-vt="descend"]::view-transition-old(root) { animation: vt-ground-up .9s cubic-bezier(.45, 0, .25, 1) both; }
+html[data-vt="descend"]::view-transition-new(root) { animation: vt-page-in .9s cubic-bezier(.45, 0, .25, 1) both; }
+@keyframes vt-ground-up { to { transform: translateY(calc(-1 * var(--lift, 0px))); } }
+@keyframes vt-page-in { from { transform: translateY(var(--lift, 0px)); } }
