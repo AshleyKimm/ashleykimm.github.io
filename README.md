@@ -10,11 +10,6 @@ Snapshots of how the site looked over time, newest first.
 
 ### 2026-11-22 — Pixel farm, walking avatar
 
-The home page opens high in the sky and pans down to the ground, where I walk in and say hi.
-Visitors can walk me around with the arrow keys or A / D. The inventory bar at the bottom
-links to Experience, Projects and the Arcade (playable demos), plus GitHub, LinkedIn and email.
-Going from Home to another page, the ground rises up into it.
-
 ![Tour: sky intro, walk-in greeting, walking, then down into Projects](screenshots/2026-11-22/tour.gif)
 
 | Home (day) | Home (night) |
