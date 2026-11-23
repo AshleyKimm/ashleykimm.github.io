@@ -34,7 +34,9 @@ const ev = async expr => (await send("Runtime.evaluate", { expression: expr, ret
 const png = async (clip) => { const r = await send("Page.captureScreenshot", { format: "png", ...(clip ? { clip: { ...clip, scale: 1 } } : {}) }); return r.result ? Buffer.from(r.result.data, "base64") : null; };
 const save = async (name, clip) => { const b = await png(clip); if (b) { writeFileSync(join(OUT, name), b); console.log("saved", name); } };
 const size = (w, h, mobile = false) => send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: 1, mobile });
-const go = async (path, wait) => { await send("Page.navigate", { url: BASE + path }); await sleep(wait); };
+// Waits while keeping the page busy (headless browsers slow down timers on an idle page)
+const wait = async ms => { const end = Date.now() + ms; while (Date.now() < end) { await ev("1"); await sleep(150); } };
+const go = async (path, ms) => { await send("Page.navigate", { url: BASE + path }); await wait(ms); };
 const key = (type, code, k, vk) => send("Input.dispatchKeyEvent", { type, code, key: k, windowsVirtualKeyCode: vk });
 const center = sel => ev(`(() => { const r = document.querySelector('${sel}').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
 await send("Page.enable");
@@ -45,6 +47,11 @@ await go("", 800);
 await ev(`localStorage.setItem("theme", "light")`);
 await go("", 11000);                                   // sky intro + walk-in + greeting
 await save("home-day.png");
+const label = await center("#click-me");               // "Click!" -> more about me
+await send("Input.dispatchMouseEvent", { type: "mousePressed", x: label.x, y: label.y, button: "left", clickCount: 1 });
+await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: label.x, y: label.y, button: "left", clickCount: 1 });
+await wait(10000);
+await save("home-about.png");
 await ev(`localStorage.setItem("theme", "dark")`);
 await go("", 11000);
 await save("home-night.png");
@@ -66,6 +73,10 @@ const grab = async (ms) => {                          // capture frames for `ms`
     while (Date.now() < end) { const t = Date.now(); const b = await png(); if (b) frames.push({ t, b }); }
 };
 await grab(10500);                                     // sky pans down, Ashley walks in and says hi
+const more = await center("#click-me");
+await send("Input.dispatchMouseEvent", { type: "mousePressed", x: more.x, y: more.y, button: "left", clickCount: 1 });
+await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: more.x, y: more.y, button: "left", clickCount: 1 });
+await grab(9500);                                      // clicked "Click!": more about me types out
 await key("rawKeyDown", "ArrowRight", "ArrowRight", 39);
 await grab(1400);                                      // walks right
 await key("keyUp", "ArrowRight", "ArrowRight", 39);
@@ -75,7 +86,7 @@ await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: slot.x, y: slot.
 await grab(500);                                       // hover shows the "Projects" label
 await send("Input.dispatchMouseEvent", { type: "mousePressed", x: slot.x, y: slot.y, button: "left", clickCount: 1 });
 await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: slot.x, y: slot.y, button: "left", clickCount: 1 });
-await grab(2600);                                      // the ground rises into Projects
+await grab(4500);                                      // the ground rises into Projects
 frames.forEach((f, i) => writeFileSync(join(frameDir, `f${String(i).padStart(4, "0")}.png`), f.b));
 const durations = frames.map((f, i) => (frames[i + 1]?.t ?? f.t + 1200) - f.t);
 writeFileSync(join(frameDir, "durations.json"), JSON.stringify(durations));

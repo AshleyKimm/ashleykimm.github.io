@@ -4,9 +4,17 @@ My personal website: [ashleykimm.github.io](https://ashleykimm.github.io)
 
 avatar by [avatarsinpixels.com](https://www.avatarsinpixels.com/)
 
+![Avatar frames: facing forward, then walking and standing frames for each direction](images/preview.png)
+
 ## Versions
 
-Snapshots of how the site looked over time, newest first.
+Snapshots of how the site looked over time, newest first. Each update only shows what changed.
+
+### 2026-11-22 (later) — Click! to learn more about me
+
+| Click! | After clicking |
+| --- | --- |
+| ![Click! flashing above the avatar's head](screenshots/2026-11-22-click/home-click.png) | ![Speech bubble expanded with an intro](screenshots/2026-11-22-click/home-about.png) |
 
 ### 2026-11-22 — Pixel farm, walking avatar
 
@@ -26,7 +34,8 @@ Snapshots of how the site looked over time, newest first.
 
 ### Adding a new version
 
-Take a fresh set of screenshots and a GIF tour into a dated folder, then add a section above:
+Take screenshots of the pages that changed into a dated folder, then add a section at the top of
+Versions with just those. To capture the full set (every page plus a GIF tour) and keep the ones you need:
 
 ```
 node tools/capture-screenshots.mjs https://ashleykimm.github.io/ screenshots/YYYY-MM-DD
